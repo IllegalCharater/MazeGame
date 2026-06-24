@@ -1,0 +1,24 @@
+{
+  "ingredients": {
+    "item_gold": {
+      "ingredientId": "item_gold",
+      "displayName": "金币材料",
+      "ingredientType": "currency"
+    },
+    "ingredient_carrot": {
+      "ingredientId": "ingredient_carrot",
+      "displayName": "胡萝卜",
+      "ingredientType": "vegetable"
+    },
+    "ingredient_meat": {
+      "ingredientId": "ingredient_meat",
+      "displayName": "肉类",
+      "ingredientType": "meat"
+    },
+    "ingredient_salt": {
+      "ingredientId": "ingredient_salt",
+      "displayName": "盐",
+      "ingredientType": "seasoning"
+    }
+  }
+}

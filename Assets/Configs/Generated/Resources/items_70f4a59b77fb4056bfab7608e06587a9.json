@@ -1,0 +1,29 @@
+{
+  "items": {
+    "item_gold": {
+      "itemId": "item_gold",
+      "name": "金币",
+      "price": 1
+    },
+    "item_potion_red": {
+      "itemId": "item_potion_red",
+      "name": "生命药水",
+      "price": 50
+    },
+    "item_sword_wood": {
+      "itemId": "item_sword_wood",
+      "name": "木剑",
+      "price": 100
+    },
+    "item_sword_iron": {
+      "itemId": "item_sword_iron",
+      "name": "铁剑",
+      "price": 500
+    },
+    "item_armor_leather": {
+      "itemId": "item_armor_leather",
+      "name": "皮甲",
+      "price": 300
+    }
+  }
+}

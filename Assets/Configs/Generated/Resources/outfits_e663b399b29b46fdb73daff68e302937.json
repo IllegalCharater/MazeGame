@@ -1,0 +1,14 @@
+{
+  "outfits": {
+    "outfit_explorer": {
+      "outfitId": "outfit_explorer",
+      "displayName": "探险服",
+      "price": 300
+    },
+    "outfit_chef": {
+      "outfitId": "outfit_chef",
+      "displayName": "厨师围裙",
+      "price": 250
+    }
+  }
+}

@@ -1,0 +1,25 @@
+{
+  "blueprints": {
+    "blueprint_maze_energy": {
+      "blueprintId": "blueprint_maze_energy",
+      "displayName": "迷宫节能图纸",
+      "price": 100,
+      "buffId": "buff_maze_energy",
+      "requirementIds": []
+    },
+    "blueprint_craft_double": {
+      "blueprintId": "blueprint_craft_double",
+      "displayName": "制作灵感图纸",
+      "price": 150,
+      "buffId": "buff_craft_double",
+      "requirementIds": []
+    },
+    "blueprint_shop_speed": {
+      "blueprintId": "blueprint_shop_speed",
+      "displayName": "店铺招牌图纸",
+      "price": 200,
+      "buffId": "buff_shop_speed",
+      "requirementIds": []
+    }
+  }
+}

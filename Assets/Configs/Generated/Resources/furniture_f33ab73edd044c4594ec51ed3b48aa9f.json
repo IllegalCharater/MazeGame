@@ -1,0 +1,14 @@
+{
+  "furniture": {
+    "furniture_table_basic": {
+      "furnitureId": "furniture_table_basic",
+      "displayName": "基础餐桌",
+      "price": 150
+    },
+    "furniture_counter_wood": {
+      "furnitureId": "furniture_counter_wood",
+      "displayName": "木质柜台",
+      "price": 200
+    }
+  }
+}

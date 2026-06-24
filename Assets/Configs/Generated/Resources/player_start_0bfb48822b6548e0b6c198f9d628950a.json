@@ -1,0 +1,40 @@
+{
+  "player_start": {
+    "player_warrior": {
+      "profile": {
+        "playerId": "player_warrior",
+        "playerDisplayName": "Warrior",
+        "currency": 100,
+        "maxCurrency": 999999,
+        "energy": 100,
+        "maxEnergy": 100,
+        "level": 1
+      },
+      "items": {}
+    },
+    "player_mage": {
+      "profile": {
+        "playerId": "player_mage",
+        "playerDisplayName": "Mage",
+        "currency": 150,
+        "maxCurrency": 999999,
+        "energy": 100,
+        "maxEnergy": 100,
+        "level": 1
+      },
+      "items": {}
+    },
+    "player_rogue": {
+      "profile": {
+        "playerId": "player_rogue",
+        "playerDisplayName": "Rogue",
+        "currency": 80,
+        "maxCurrency": 999999,
+        "energy": 100,
+        "maxEnergy": 100,
+        "level": 1
+      },
+      "items": {}
+    }
+  }
+}

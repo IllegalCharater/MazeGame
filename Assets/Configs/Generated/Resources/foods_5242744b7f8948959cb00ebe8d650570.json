@@ -1,0 +1,44 @@
+{
+  "foods": {
+    "item_potion_red": {
+      "foodId": "item_potion_red",
+      "displayName": "生命药水",
+      "price": 50,
+      "energyRestore": 20,
+      "ingredientItems": [
+        "item_gold"
+      ],
+      "ingredientAmounts": [
+        10
+      ]
+    },
+    "food_carrot_soup": {
+      "foodId": "food_carrot_soup",
+      "displayName": "胡萝卜汤",
+      "price": 80,
+      "energyRestore": 25,
+      "ingredientItems": [
+        "ingredient_carrot",
+        "ingredient_salt"
+      ],
+      "ingredientAmounts": [
+        2,
+        1
+      ]
+    },
+    "food_meat_stew": {
+      "foodId": "food_meat_stew",
+      "displayName": "炖肉",
+      "price": 120,
+      "energyRestore": 35,
+      "ingredientItems": [
+        "ingredient_meat",
+        "ingredient_salt"
+      ],
+      "ingredientAmounts": [
+        2,
+        1
+      ]
+    }
+  }
+}

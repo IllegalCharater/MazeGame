@@ -1,0 +1,46 @@
+{
+  "recipes": {
+    "recipe1": {
+      "recipeId": "recipe1",
+      "displayName": "Carrot Soup",
+      "outputItems": [
+        "food_carrot_soup"
+      ],
+      "outputAmounts": [
+        1
+      ],
+      "ingredients": {
+        "ingredient_carrot": 2,
+        "ingredient_salt": 1
+      }
+    },
+    "recipe2": {
+      "recipeId": "recipe2",
+      "displayName": "Meat Stew",
+      "outputItems": [
+        "food_meat_stew"
+      ],
+      "outputAmounts": [
+        1
+      ],
+      "ingredients": {
+        "ingredient_meat": 2,
+        "ingredient_salt": 1
+      }
+    },
+    "recipe3": {
+      "recipeId": "recipe3",
+      "displayName": "Red Potion",
+      "outputItems": [
+        "item_potion_red"
+      ],
+      "outputAmounts": [
+        1
+      ],
+      "ingredients": {
+        "ingredient_carrot": 1,
+        "ingredient_salt": 1
+      }
+    }
+  }
+}

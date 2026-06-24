@@ -1,0 +1,25 @@
+{
+  "buffs": {
+    "buff_maze_energy": {
+      "buffId": "buff_maze_energy",
+      "displayName": "迷宫体力节省",
+      "category": 0,
+      "durationSeconds": 60.0,
+      "value": 0.1
+    },
+    "buff_craft_double": {
+      "buffId": "buff_craft_double",
+      "displayName": "制作双倍概率",
+      "category": 1,
+      "durationSeconds": 60.0,
+      "value": 0.1
+    },
+    "buff_shop_speed": {
+      "buffId": "buff_shop_speed",
+      "displayName": "店铺售卖加速",
+      "category": 2,
+      "durationSeconds": 60.0,
+      "value": 0.1
+    }
+  }
+}
