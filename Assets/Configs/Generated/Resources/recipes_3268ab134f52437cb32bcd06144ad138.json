@@ -1,8 +1,8 @@
 {
   "recipes": {
-    "recipe1": {
-      "recipeId": "recipe1",
-      "displayName": "Carrot Soup",
+    "recipe_carrot_soup": {
+      "recipeId": "recipe_carrot_soup",
+      "displayName": "胡萝卜暖汤",
       "outputItems": [
         "food_carrot_soup"
       ],
@@ -14,9 +14,94 @@
         "ingredient_salt": 1
       }
     },
-    "recipe2": {
-      "recipeId": "recipe2",
-      "displayName": "Meat Stew",
+    "recipe_mushroom_skewer": {
+      "recipeId": "recipe_mushroom_skewer",
+      "displayName": "迷雾蘑菇串",
+      "outputItems": [
+        "food_mushroom_skewer"
+      ],
+      "outputAmounts": [
+        1
+      ],
+      "ingredients": {
+        "ingredient_mushroom": 3,
+        "ingredient_salt": 1
+      }
+    },
+    "recipe_lotus_crisp": {
+      "recipeId": "recipe_lotus_crisp",
+      "displayName": "莲藕脆片",
+      "outputItems": [
+        "food_lotus_crisp"
+      ],
+      "outputAmounts": [
+        1
+      ],
+      "ingredients": {
+        "ingredient_lotus_root": 3,
+        "ingredient_salt": 1
+      }
+    },
+    "recipe_spiced_egg": {
+      "recipeId": "recipe_spiced_egg",
+      "displayName": "香料煎蛋",
+      "outputItems": [
+        "food_spiced_egg"
+      ],
+      "outputAmounts": [
+        1
+      ],
+      "ingredients": {
+        "ingredient_egg": 2,
+        "ingredient_spice": 1
+      }
+    },
+    "recipe_wheat_cake": {
+      "recipeId": "recipe_wheat_cake",
+      "displayName": "麦香烤饼",
+      "outputItems": [
+        "food_wheat_cake"
+      ],
+      "outputAmounts": [
+        1
+      ],
+      "ingredients": {
+        "ingredient_wheat": 2,
+        "ingredient_honey": 1
+      }
+    },
+    "recipe_fish_rice": {
+      "recipeId": "recipe_fish_rice",
+      "displayName": "河鲜饭团",
+      "outputItems": [
+        "food_fish_rice"
+      ],
+      "outputAmounts": [
+        1
+      ],
+      "ingredients": {
+        "ingredient_fish": 1,
+        "ingredient_rice": 2,
+        "ingredient_salt": 1
+      }
+    },
+    "recipe_honey_milk": {
+      "recipeId": "recipe_honey_milk",
+      "displayName": "蜂蜜热奶",
+      "outputItems": [
+        "food_honey_milk"
+      ],
+      "outputAmounts": [
+        1
+      ],
+      "ingredients": {
+        "ingredient_milk": 2,
+        "ingredient_honey": 1
+      }
+    },
+    "recipe_meat_stew": {
+      "recipeId": "recipe_meat_stew",
+      "displayName": "秘境炖肉",
       "outputItems": [
         "food_meat_stew"
       ],
@@ -25,21 +110,41 @@
       ],
       "ingredients": {
         "ingredient_meat": 2,
-        "ingredient_salt": 1
+        "ingredient_carrot": 1,
+        "ingredient_spice": 1
       }
     },
-    "recipe3": {
-      "recipeId": "recipe3",
-      "displayName": "Red Potion",
+    "recipe_maze_bento": {
+      "recipeId": "recipe_maze_bento",
+      "displayName": "探险便当",
       "outputItems": [
-        "item_potion_red"
+        "food_maze_bento"
       ],
       "outputAmounts": [
         1
       ],
       "ingredients": {
-        "ingredient_carrot": 1,
-        "ingredient_salt": 1
+        "ingredient_rice": 2,
+        "ingredient_meat": 1,
+        "ingredient_egg": 1,
+        "ingredient_carrot": 1
+      }
+    },
+    "recipe_feast_platter": {
+      "recipeId": "recipe_feast_platter",
+      "displayName": "迷宫丰收拼盘",
+      "outputItems": [
+        "food_feast_platter"
+      ],
+      "outputAmounts": [
+        1
+      ],
+      "ingredients": {
+        "ingredient_meat": 2,
+        "ingredient_fish": 2,
+        "ingredient_mushroom": 2,
+        "ingredient_spice": 1,
+        "ingredient_honey": 1
       }
     }
   }

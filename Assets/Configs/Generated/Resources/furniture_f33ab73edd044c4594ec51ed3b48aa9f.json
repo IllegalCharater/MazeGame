@@ -2,13 +2,43 @@
   "furniture": {
     "furniture_table_basic": {
       "furnitureId": "furniture_table_basic",
-      "displayName": "基础餐桌",
+      "displayName": "木纹小餐桌",
       "price": 150
     },
     "furniture_counter_wood": {
       "furnitureId": "furniture_counter_wood",
-      "displayName": "木质柜台",
-      "price": 200
+      "displayName": "温暖木柜台",
+      "price": 220
+    },
+    "furniture_shelf_ingredient": {
+      "furnitureId": "furniture_shelf_ingredient",
+      "displayName": "食材展示架",
+      "price": 260
+    },
+    "furniture_lamp_firefly": {
+      "furnitureId": "furniture_lamp_firefly",
+      "displayName": "萤火灯笼",
+      "price": 320
+    },
+    "furniture_wall_map": {
+      "furnitureId": "furniture_wall_map",
+      "displayName": "迷宫手绘地图",
+      "price": 380
+    },
+    "furniture_stove_copper": {
+      "furnitureId": "furniture_stove_copper",
+      "displayName": "铜锅炉灶",
+      "price": 480
+    },
+    "furniture_flower_corner": {
+      "furnitureId": "furniture_flower_corner",
+      "displayName": "香草盆栽角",
+      "price": 520
+    },
+    "furniture_vip_table": {
+      "furnitureId": "furniture_vip_table",
+      "displayName": "丰收长桌",
+      "price": 800
     }
   }
 }

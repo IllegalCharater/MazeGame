@@ -2,13 +2,43 @@
   "outfits": {
     "outfit_explorer": {
       "outfitId": "outfit_explorer",
-      "displayName": "探险服",
+      "displayName": "新手探险服",
       "price": 300
     },
     "outfit_chef": {
       "outfitId": "outfit_chef",
       "displayName": "厨师围裙",
-      "price": 250
+      "price": 320
+    },
+    "outfit_mushroom_cap": {
+      "outfitId": "outfit_mushroom_cap",
+      "displayName": "蘑菇采集帽",
+      "price": 420
+    },
+    "outfit_lantern_cloak": {
+      "outfitId": "outfit_lantern_cloak",
+      "displayName": "提灯斗篷",
+      "price": 560
+    },
+    "outfit_shop_apron": {
+      "outfitId": "outfit_shop_apron",
+      "displayName": "店长围裙",
+      "price": 680
+    },
+    "outfit_forest_ranger": {
+      "outfitId": "outfit_forest_ranger",
+      "displayName": "森林巡游装",
+      "price": 760
+    },
+    "outfit_golden_chef": {
+      "outfitId": "outfit_golden_chef",
+      "displayName": "金勺厨师装",
+      "price": 980
+    },
+    "outfit_maze_master": {
+      "outfitId": "outfit_maze_master",
+      "displayName": "迷宫大师套装",
+      "price": 1280
     }
   }
 }

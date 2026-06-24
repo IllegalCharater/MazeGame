@@ -3,38 +3,51 @@
     "player_warrior": {
       "profile": {
         "playerId": "player_warrior",
-        "playerDisplayName": "Warrior",
-        "currency": 100,
-        "maxCurrency": 999999,
+        "playerDisplayName": "新手店主",
+        "currency": 180,
+        "maxCurrency": 100,
         "energy": 100,
         "maxEnergy": 100,
         "level": 1
       },
-      "items": {}
+      "items": {
+        "ingredient_carrot": 6,
+        "ingredient_salt": 3,
+        "ingredient_rice": 2,
+        "food_carrot_soup": 1
+      }
     },
     "player_mage": {
       "profile": {
         "playerId": "player_mage",
-        "playerDisplayName": "Mage",
-        "currency": 150,
-        "maxCurrency": 999999,
+        "playerDisplayName": "料理学徒",
+        "currency": 160,
+        "maxCurrency": 100,
         "energy": 100,
         "maxEnergy": 100,
         "level": 1
       },
-      "items": {}
+      "items": {
+        "ingredient_mushroom": 3,
+        "ingredient_wheat": 3,
+        "ingredient_honey": 1
+      }
     },
     "player_rogue": {
       "profile": {
         "playerId": "player_rogue",
-        "playerDisplayName": "Rogue",
-        "currency": 80,
-        "maxCurrency": 999999,
-        "energy": 100,
+        "playerDisplayName": "迷宫跑者",
+        "currency": 120,
+        "maxCurrency": 100,
+        "energy": 120,
         "maxEnergy": 100,
         "level": 1
       },
-      "items": {}
+      "items": {
+        "ingredient_carrot": 2,
+        "ingredient_salt": 2,
+        "ingredient_egg": 2
+      }
     }
   }
 }

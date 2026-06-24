@@ -1,20 +1,8 @@
 {
   "foods": {
-    "item_potion_red": {
-      "foodId": "item_potion_red",
-      "displayName": "生命药水",
-      "price": 50,
-      "energyRestore": 20,
-      "ingredientItems": [
-        "item_gold"
-      ],
-      "ingredientAmounts": [
-        10
-      ]
-    },
     "food_carrot_soup": {
       "foodId": "food_carrot_soup",
-      "displayName": "胡萝卜汤",
+      "displayName": "胡萝卜暖汤",
       "price": 80,
       "energyRestore": 25,
       "ingredientItems": [
@@ -26,17 +14,143 @@
         1
       ]
     },
-    "food_meat_stew": {
-      "foodId": "food_meat_stew",
-      "displayName": "炖肉",
-      "price": 120,
-      "energyRestore": 35,
+    "food_mushroom_skewer": {
+      "foodId": "food_mushroom_skewer",
+      "displayName": "迷雾蘑菇串",
+      "price": 100,
+      "energyRestore": 28,
       "ingredientItems": [
-        "ingredient_meat",
+        "ingredient_mushroom",
         "ingredient_salt"
       ],
       "ingredientAmounts": [
+        3,
+        1
+      ]
+    },
+    "food_lotus_crisp": {
+      "foodId": "food_lotus_crisp",
+      "displayName": "莲藕脆片",
+      "price": 110,
+      "energyRestore": 30,
+      "ingredientItems": [
+        "ingredient_lotus_root",
+        "ingredient_salt"
+      ],
+      "ingredientAmounts": [
+        3,
+        1
+      ]
+    },
+    "food_spiced_egg": {
+      "foodId": "food_spiced_egg",
+      "displayName": "香料煎蛋",
+      "price": 95,
+      "energyRestore": 22,
+      "ingredientItems": [
+        "ingredient_egg",
+        "ingredient_spice"
+      ],
+      "ingredientAmounts": [
         2,
+        1
+      ]
+    },
+    "food_wheat_cake": {
+      "foodId": "food_wheat_cake",
+      "displayName": "麦香烤饼",
+      "price": 90,
+      "energyRestore": 20,
+      "ingredientItems": [
+        "ingredient_wheat",
+        "ingredient_honey"
+      ],
+      "ingredientAmounts": [
+        2,
+        1
+      ]
+    },
+    "food_fish_rice": {
+      "foodId": "food_fish_rice",
+      "displayName": "河鲜饭团",
+      "price": 130,
+      "energyRestore": 35,
+      "ingredientItems": [
+        "ingredient_fish",
+        "ingredient_rice",
+        "ingredient_salt"
+      ],
+      "ingredientAmounts": [
+        1,
+        2,
+        1
+      ]
+    },
+    "food_honey_milk": {
+      "foodId": "food_honey_milk",
+      "displayName": "蜂蜜热奶",
+      "price": 120,
+      "energyRestore": 45,
+      "ingredientItems": [
+        "ingredient_milk",
+        "ingredient_honey"
+      ],
+      "ingredientAmounts": [
+        2,
+        1
+      ]
+    },
+    "food_meat_stew": {
+      "foodId": "food_meat_stew",
+      "displayName": "秘境炖肉",
+      "price": 150,
+      "energyRestore": 40,
+      "ingredientItems": [
+        "ingredient_meat",
+        "ingredient_carrot",
+        "ingredient_spice"
+      ],
+      "ingredientAmounts": [
+        2,
+        1,
+        1
+      ]
+    },
+    "food_maze_bento": {
+      "foodId": "food_maze_bento",
+      "displayName": "探险便当",
+      "price": 220,
+      "energyRestore": 65,
+      "ingredientItems": [
+        "ingredient_rice",
+        "ingredient_meat",
+        "ingredient_egg",
+        "ingredient_carrot"
+      ],
+      "ingredientAmounts": [
+        2,
+        1,
+        1,
+        1
+      ]
+    },
+    "food_feast_platter": {
+      "foodId": "food_feast_platter",
+      "displayName": "迷宫丰收拼盘",
+      "price": 360,
+      "energyRestore": 100,
+      "ingredientItems": [
+        "ingredient_meat",
+        "ingredient_fish",
+        "ingredient_mushroom",
+        "ingredient_spice",
+        "ingredient_honey"
+      ],
+      "ingredientAmounts": [
+        2,
+        2,
+        2,
+        1,
         1
       ]
     }

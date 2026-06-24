@@ -1,25 +1,79 @@
 {
   "blueprints": {
+    "blueprint_maze_energy_small": {
+      "blueprintId": "blueprint_maze_energy_small",
+      "displayName": "轻装探索图纸",
+      "price": 120,
+      "buffId": "buff_maze_energy_small",
+      "requirementIds": []
+    },
     "blueprint_maze_energy": {
       "blueprintId": "blueprint_maze_energy",
-      "displayName": "迷宫节能图纸",
-      "price": 100,
+      "displayName": "节能步伐图纸",
+      "price": 260,
       "buffId": "buff_maze_energy",
+      "requirementIds": [
+        "clear_forest_maze"
+      ]
+    },
+    "blueprint_maze_energy_large": {
+      "blueprintId": "blueprint_maze_energy_large",
+      "displayName": "迷宫指南针图纸",
+      "price": 520,
+      "buffId": "buff_maze_energy_large",
+      "requirementIds": [
+        "clear_depth_maze"
+      ]
+    },
+    "blueprint_craft_double_small": {
+      "blueprintId": "blueprint_craft_double_small",
+      "displayName": "灵感火花图纸",
+      "price": 140,
+      "buffId": "buff_craft_double_small",
       "requirementIds": []
     },
     "blueprint_craft_double": {
       "blueprintId": "blueprint_craft_double",
-      "displayName": "制作灵感图纸",
-      "price": 150,
+      "displayName": "料理直觉图纸",
+      "price": 300,
       "buffId": "buff_craft_double",
+      "requirementIds": [
+        "food_carrot_soup"
+      ]
+    },
+    "blueprint_craft_double_large": {
+      "blueprintId": "blueprint_craft_double_large",
+      "displayName": "大师备餐术图纸",
+      "price": 620,
+      "buffId": "buff_craft_double_large",
+      "requirementIds": [
+        "food_maze_bento"
+      ]
+    },
+    "blueprint_shop_speed_small": {
+      "blueprintId": "blueprint_shop_speed_small",
+      "displayName": "热情招呼图纸",
+      "price": 160,
+      "buffId": "buff_shop_speed_small",
       "requirementIds": []
     },
     "blueprint_shop_speed": {
       "blueprintId": "blueprint_shop_speed",
-      "displayName": "店铺招牌图纸",
-      "price": 200,
+      "displayName": "醒目招牌图纸",
+      "price": 340,
       "buffId": "buff_shop_speed",
-      "requirementIds": []
+      "requirementIds": [
+        "food_mushroom_skewer"
+      ]
+    },
+    "blueprint_shop_speed_large": {
+      "blueprintId": "blueprint_shop_speed_large",
+      "displayName": "黄金营业时段图纸",
+      "price": 680,
+      "buffId": "buff_shop_speed_large",
+      "requirementIds": [
+        "food_feast_platter"
+      ]
     }
   }
 }
