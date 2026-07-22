@@ -12,6 +12,7 @@ public enum MazeRunState
 public enum MazeRunEndReason
 {
     Clear,
+    PerfectClear,
     Evacuate,
     EnergyEmpty
 }
@@ -38,12 +39,6 @@ public enum CollectionCategory
     Food,
     Outfit,
     Furniture
-}
-
-public enum PickupType
-{
-    DirectToInventory,
-    MazeRunLoot
 }
 
 public interface IGameService

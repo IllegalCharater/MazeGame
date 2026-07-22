@@ -418,6 +418,38 @@ public static partial class ExcelToJsonExporter
         return jsonDict;
 
     }
+
+    public static Dictionary<string, int> ParseIntDictionary(DataTable dt, int row, string col)
+    {
+        Dictionary<string, string> raw = ParseDictionary(dt, row, col);
+        var result = new Dictionary<string, int>(StringComparer.Ordinal);
+        foreach (var kv in raw)
+        {
+            if (string.IsNullOrWhiteSpace(kv.Key))
+                continue;
+            if (!int.TryParse(kv.Value, NumberStyles.Integer, CultureInfo.InvariantCulture, out int value))
+                continue;
+            if (value <= 0)
+                continue;
+
+            result[Norm(kv.Key)] = value;
+        }
+
+        return result;
+    }
+
+    public static bool Bool(DataTable dt, int row, string col, bool def)
+    {
+        string s = Str(dt, row, col);
+        if (string.IsNullOrWhiteSpace(s))
+            return def;
+        if (bool.TryParse(s, out bool b))
+            return b;
+        if (int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out int i))
+            return i != 0;
+
+        return s == "yes" || s == "y" || s == "true" || s == "是";
+    }
     /// <summary>
     /// 解析列表单元格：支持标准 JSON 数组 <c>["a","b"]</c>，以及 <c>[a,b]</c> 无引号形式（逗号分隔，自动 Trim）。
     /// </summary>

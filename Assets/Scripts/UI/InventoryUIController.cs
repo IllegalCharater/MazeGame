@@ -1,11 +1,32 @@
 using System.Text;
-using UnityEngine;
 using UnityEngine.UI;
 
-[DisallowMultipleComponent]
-public sealed class InventoryUIController : MonoBehaviour
+public sealed class InventoryUIController : BaseUIController
 {
-    [SerializeField] private Text inventoryText;
+    private Text inventoryText;
+
+    public override void BindUI()
+    {
+        if (inventoryText == null)
+            inventoryText = FindText("Inventory Text");
+    }
+
+    public override void EventMapper()
+    {
+        GameEvents.OnInventoryChanged += Refresh;
+        Refresh();
+    }
+
+    public override void OnOpen()
+    {
+        Refresh();
+    }
+
+    public override void Dismiss()
+    {
+        GameEvents.OnInventoryChanged -= Refresh;
+        base.Dismiss();
+    }
 
     public void BindInventoryText(Text text)
     {
@@ -13,20 +34,9 @@ public sealed class InventoryUIController : MonoBehaviour
         Refresh();
     }
 
-    private void OnEnable()
-    {
-        GameEvents.OnInventoryChanged += Refresh;
-        Refresh();
-    }
-
-    private void OnDisable()
-    {
-        GameEvents.OnInventoryChanged -= Refresh;
-    }
-
     public void Refresh()
     {
-        if (inventoryText == null || GameDatabase.Instance.GetPlayerData().inventory == null)
+        if (inventoryText == null || GameDatabase.Instance?.GetPlayerData()?.inventory == null)
             return;
 
         StringBuilder sb = new StringBuilder();

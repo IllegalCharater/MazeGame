@@ -1,28 +1,38 @@
 using System.Text;
-using UnityEngine;
 using UnityEngine.UI;
 
-[DisallowMultipleComponent]
-public sealed class CollectionUIController : MonoBehaviour
+public sealed class CollectionUIController : BaseUIController
 {
-    [SerializeField] private Text collectionText;
-    [SerializeField] private CollectionCategory category = CollectionCategory.Food;
+    private Text collectionText;
+    private CollectionCategory category = CollectionCategory.Food;
 
-    public void BindCollectionText(Text text)
+    public override void BindUI()
     {
-        collectionText = text;
-        Refresh();
+        if (collectionText == null)
+            collectionText = FindText("Collection Text");
     }
 
-    private void OnEnable()
+    public override void EventMapper()
     {
         GameEvents.OnCollectionChanged += OnCollectionChanged;
         Refresh();
     }
 
-    private void OnDisable()
+    public override void OnOpen()
+    {
+        Refresh();
+    }
+
+    public override void Dismiss()
     {
         GameEvents.OnCollectionChanged -= OnCollectionChanged;
+        base.Dismiss();
+    }
+
+    public void BindCollectionText(Text text)
+    {
+        collectionText = text;
+        Refresh();
     }
 
     private void OnCollectionChanged(CollectionCategory changedCategory)

@@ -16,7 +16,27 @@ MonoBehaviour:
   m_Data:
     m_SerializedData: []
   m_GUID: e04c5654389e5f8488033fc24f0d138f
-  m_SerializeEntries: []
+  m_SerializeEntries:
+  - m_GUID: 9552fbf49ac406f42b1ac9def4d9d42d
+    m_Address: Assets/UI/Prefabs/HUD.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 823153fd68d3fdf478d61021b04da501
+    m_Address: Assets/UI/Prefabs/MainMenuUI.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 78e0e35ead634ce40b4139d5e8f07dd4
+    m_Address: Assets/UI/Prefabs/MazeUI.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 14af8167f4f441b4e980b8e40161206a
+    m_Address: Assets/UI/Prefabs/ProfileDetailUI.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 5cc6478edd7ee424092a64249f40b492
+    m_Address: Assets/UI/Prefabs/ShopUI.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 60e1d9d016269dc43a47a912b66da943, type: 2}
   m_SchemaSet:

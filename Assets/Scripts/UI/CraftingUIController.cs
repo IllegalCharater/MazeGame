@@ -1,9 +1,6 @@
-using UnityEngine;
-
-[DisallowMultipleComponent]
-public sealed class CraftingUIController : MonoBehaviour
+public sealed class CraftingUIController : BaseUIController
 {
-    [SerializeField] private string defaultRecipeId = "recipe1";
+    private string defaultRecipeId = "recipe1";
 
     public void StartDefaultRecipe()
     {

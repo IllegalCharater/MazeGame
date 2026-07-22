@@ -1,10 +1,19 @@
-using UnityEngine;
 using UnityEngine.UI;
 
-[DisallowMultipleComponent]
-public sealed class ProfileUIController : MonoBehaviour
+public sealed class ProfileUIController : BaseUIController
 {
-    [SerializeField] private Text profileText;
+    private Text profileText;
+
+    public override void BindUI()
+    {
+        if (profileText == null)
+            profileText = FindText("Profile Text");
+    }
+
+    public override void OnOpen()
+    {
+        Refresh();
+    }
 
     public void BindProfileText(Text text)
     {
@@ -12,14 +21,9 @@ public sealed class ProfileUIController : MonoBehaviour
         Refresh();
     }
 
-    private void OnEnable()
-    {
-        Refresh();
-    }
-
     public void Refresh()
     {
-        PlayerProfile profile = GameDatabase.Instance?.GetPlayerData().profile;
+        PlayerProfile profile = GameDatabase.Instance?.GetPlayerData()?.profile;
         if (profileText == null || profile == null)
             return;
 

@@ -1,33 +1,63 @@
-using System.Collections;
 using UnityEngine;
 using UnityEngine.UI;
 
-[DisallowMultipleComponent]
-public sealed class HUDController : MonoBehaviour
+public sealed class HUDController : BaseUIController
 {
-    [Header("UI References")]
-    [SerializeField] private Text playerNameText;
-    [SerializeField] private Text levelText;
-    [SerializeField] private Text currencyText;
-    [SerializeField] private Text energyText;
-    [SerializeField] private Text stateHintText;
-    [SerializeField] private Text toastText;
-    [SerializeField] private Button profileButton;
+    public override string layerName => UIConfig.TopLayerName;
+    public override bool hasInputBlocker => false;
+    
+    private Text playerNameText;
+    private Text levelText;
+    private Text currencyText;
+    private Text energyText;
+    private Text stateHintText;
+    private Text toastText;
+    private Button profileButton;
 
-    [Header("Hints")]
-    [SerializeField] private string mazeHint = "Maze: explore and collect ingredients.";
-    [SerializeField] private string shopHint = "Shop: craft, display, and sell food.";
-    [SerializeField] private string menuHint = "Main Menu";
-    [SerializeField] private string levelFormat = "Lv.{0}";
-    [SerializeField] private string currencyFormat = "{0:0}";
-    [SerializeField] private string energyFormat = "{0}/{1}";
-    [SerializeField] private float toastDuration = 2f;
+    private string mazeHint = "Maze: explore and collect ingredients.";
+    private string shopHint = "Shop: craft, display, and sell food.";
+    private string menuHint = "Main Menu";
+    private string levelFormat = "Lv.{0}";
+    private string currencyFormat = "{0:0}";
+    private string energyFormat = "{0}/{1}";
 
-    private Coroutine toastRoutine;
-
-    private void Awake()
+    public override void BindUI()
     {
-        AutoBindMissingReferences();
+        GameObject profileCard=FindObject("Profile Card");
+        playerNameText=FindComponent<Text>(profileCard,"Player Name");
+        levelText=FindComponent<Text>(profileCard,"Level Text");
+        energyText=FindComponent<Text>(profileCard,"Exp Text");
+        profileButton=FindComponent<Button>(profileCard);
+        GameObject coinBar=FindObject("CoinBar");
+        currencyText=FindComponent<Text>(coinBar,"Currency");
+        if (toastText != null)
+            toastText.gameObject.SetActive(false);
+    }
+
+    public override void EventMapper()
+    {
+        GameEvents.OnCurrencyChanged += UpdateCurrency;
+        GameEvents.OnEnergyChanged += UpdateEnergy;
+        GameEvents.OnGameStateChanged += OnGameStateChanged;
+        GameEvents.OnInventoryChanged += OnInventoryChanged;
+        GameEvents.OnMazeRunEnded += OnMazeRunEnded;
+        BindClickEvent(profileButton, OpenProfileDetail);
+        RefreshNow();
+    }
+
+    public override void OnOpen()
+    {
+        RefreshNow();
+    }
+
+    public override void Dismiss()
+    {
+        GameEvents.OnCurrencyChanged -= UpdateCurrency;
+        GameEvents.OnEnergyChanged -= UpdateEnergy;
+        GameEvents.OnGameStateChanged -= OnGameStateChanged;
+        GameEvents.OnInventoryChanged -= OnInventoryChanged;
+        GameEvents.OnMazeRunEnded -= OnMazeRunEnded;
+        base.Dismiss();
     }
 
     public void Bind(Text currency, Text energy, Text stateHint, Text toast)
@@ -41,20 +71,6 @@ public sealed class HUDController : MonoBehaviour
         RefreshNow();
     }
 
-    private void OnEnable()
-    {
-        GameEvents.OnCurrencyChanged += UpdateCurrency;
-        GameEvents.OnEnergyChanged += UpdateEnergy;
-        GameEvents.OnGameStateChanged += OnGameStateChanged;
-        GameEvents.OnInventoryChanged += OnInventoryChanged;
-        GameEvents.OnMazeRunEnded += OnMazeRunEnded;
-        if (profileButton != null)
-            profileButton.onClick.AddListener(OpenProfileDetail);
-
-        if (GameManager.Instance != null)
-            RefreshNow();
-    }
-
     private void RefreshNow()
     {
         if (GameManager.Instance == null || GameManager.Instance.gameDatabase?.GetPlayerData()?.profile == null)
@@ -65,17 +81,6 @@ public sealed class HUDController : MonoBehaviour
         UpdateCurrency(profile.currency);
         UpdateEnergy(profile.energy, profile.maxEnergy);
         UpdateStateHint(GameManager.Instance.CurrentState);
-    }
-
-    private void OnDisable()
-    {
-        GameEvents.OnCurrencyChanged -= UpdateCurrency;
-        GameEvents.OnEnergyChanged -= UpdateEnergy;
-        GameEvents.OnGameStateChanged -= OnGameStateChanged;
-        GameEvents.OnInventoryChanged -= OnInventoryChanged;
-        GameEvents.OnMazeRunEnded -= OnMazeRunEnded;
-        if (profileButton != null)
-            profileButton.onClick.RemoveListener(OpenProfileDetail);
     }
 
     private void UpdateProfile(PlayerProfile profile)
@@ -116,9 +121,9 @@ public sealed class HUDController : MonoBehaviour
             case GameState.InMaze:
                 UIHelper.SetText(stateHintText, mazeHint);
                 break;
-            case GameState.InShop:
-                UIHelper.SetText(stateHintText, shopHint);
-                break;
+            // case GameState.InShop:
+            //     UIHelper.SetText(stateHintText, shopHint);
+            //     break;
             default:
                 UIHelper.SetText(stateHintText, menuHint);
                 break;
@@ -127,9 +132,7 @@ public sealed class HUDController : MonoBehaviour
 
     private void OpenProfileDetail()
     {
-        MainMenuUIController mainMenu = FindObjectOfType<MainMenuUIController>(true);
-        if (mainMenu != null)
-            mainMenu.OpenProfileDetail();
+        UIManager.GotoView("ProfileDetailUI");
     }
 
     private void OnInventoryChanged()
@@ -148,36 +151,8 @@ public sealed class HUDController : MonoBehaviour
         if (toastText == null)
             return;
 
-        if (toastRoutine != null)
-            StopCoroutine(toastRoutine);
-        toastRoutine = StartCoroutine(ToastRoutine(message));
-    }
-
-    private IEnumerator ToastRoutine(string message)
-    {
         toastText.gameObject.SetActive(true);
         UIHelper.SetText(toastText, message);
-        yield return new WaitForSeconds(Mathf.Max(0.1f, toastDuration));
-        toastText.gameObject.SetActive(false);
-        toastRoutine = null;
     }
-
-    private void AutoBindMissingReferences()
-    {
-        if (playerNameText == null)
-            playerNameText = UIHelper.FindText(this, "Player Name");
-        if (levelText == null)
-            levelText = UIHelper.FindText(this, "Level Text");
-        if (currencyText == null)
-            currencyText = UIHelper.FindText(this, "Gold Text");
-        if (energyText == null)
-            energyText = UIHelper.FindText(this, "Exp Text");
-        if (stateHintText == null)
-            stateHintText = UIHelper.FindText(this, "State Hint Text");
-        if (toastText == null)
-            toastText = UIHelper.FindText(this, "Toast Text");
-        if (profileButton == null)
-            profileButton = UIHelper.FindButton(this, "Profile Card");
-    }
-
+    
 }

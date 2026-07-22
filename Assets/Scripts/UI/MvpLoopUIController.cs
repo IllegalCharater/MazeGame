@@ -1,26 +1,27 @@
 using System.Collections.Generic;
 using System.Text;
-using UnityEngine;
 using UnityEngine.UI;
 
-[DisallowMultipleComponent]
-public sealed class MvpLoopUIController : MonoBehaviour
+public sealed class MvpLoopUIController : BaseUIController
 {
-    [Header("MVP Defaults")]
-    [SerializeField] private string defaultLootItemId = "ingredient_carrot";
-    [SerializeField] private int defaultLootAmount = 2;
-    [SerializeField] private string secondaryLootItemId = "ingredient_salt";
-    [SerializeField] private int secondaryLootAmount = 1;
-    [SerializeField] private string defaultRecipeId = "recipe1";
-    [SerializeField] private string defaultFoodId = "food_carrot_soup";
-    [SerializeField] private int defaultFoodAmount = 1;
-
-    [Header("Optional UI")]
-    [SerializeField] private Text statusText;
+    private string defaultLootItemId = "ingredient_carrot";
+    private int defaultLootAmount = 2;
+    private string secondaryLootItemId = "ingredient_salt";
+    private int secondaryLootAmount = 1;
+    private string defaultRecipeId = "recipe1";
+    private string defaultFoodId = "food_carrot_soup";
+    private int defaultFoodAmount = 1;
+    private Text statusText;
 
     private string lastMessage = "Ready.";
 
-    private void OnEnable()
+    public override void BindUI()
+    {
+        if (statusText == null)
+            statusText = FindText("Status Text");
+    }
+
+    public override void EventMapper()
     {
         GameEvents.OnInventoryChanged += RefreshStatus;
         GameEvents.OnCraftingChanged += RefreshStatus;
@@ -29,12 +30,18 @@ public sealed class MvpLoopUIController : MonoBehaviour
         RefreshStatus();
     }
 
-    private void OnDisable()
+    public override void OnOpen()
+    {
+        RefreshStatus();
+    }
+
+    public override void Dismiss()
     {
         GameEvents.OnInventoryChanged -= RefreshStatus;
         GameEvents.OnCraftingChanged -= RefreshStatus;
         GameEvents.OnShopChanged -= RefreshStatus;
         GameEvents.OnMazeRunEnded -= OnMazeRunEnded;
+        base.Dismiss();
     }
 
     public void BeginMazeRun()
@@ -46,18 +53,16 @@ public sealed class MvpLoopUIController : MonoBehaviour
         SetMessage(success ? "Maze run started." : "Not enough energy to enter the maze.");
     }
 
-    public void CollectDefaultLoot()
+    public void AddDefaultMazeLoot()
     {
         if (!TryGetServices(out GameServices services))
             return;
 
-        bool success = services.MazeRun.CollectItem(defaultLootItemId, defaultLootAmount);
-        if (success && !string.IsNullOrEmpty(secondaryLootItemId) && secondaryLootAmount > 0)
-            success = services.MazeRun.CollectItem(secondaryLootItemId, secondaryLootAmount);
+        bool success = services.MazeRun.AddRunLoot(BuildDefaultMazeLoot());
 
         SetMessage(success
-            ? "Collected default ingredients in current maze run."
-            : "Failed to collect default loot.");
+            ? "Added default maze loot to current run."
+            : "Failed to add default maze loot.");
     }
 
     public void CompleteMazeRun()
@@ -130,12 +135,9 @@ public sealed class MvpLoopUIController : MonoBehaviour
             return;
         }
 
-        bool collected = services.MazeRun.CollectItem(defaultLootItemId, defaultLootAmount);
-        if (collected && !string.IsNullOrEmpty(secondaryLootItemId) && secondaryLootAmount > 0)
-            collected = services.MazeRun.CollectItem(secondaryLootItemId, secondaryLootAmount);
-        if (!collected)
+        if (!services.MazeRun.AddRunLoot(BuildDefaultMazeLoot()))
         {
-            SetMessage("Full loop stopped: failed to collect ingredients.");
+            SetMessage("Full loop stopped: failed to add maze loot.");
             return;
         }
 
@@ -209,20 +211,30 @@ public sealed class MvpLoopUIController : MonoBehaviour
         RefreshStatus();
     }
 
+    private Dictionary<string, int> BuildDefaultMazeLoot()
+    {
+        Dictionary<string, int> loot = new Dictionary<string, int>();
+        if (!string.IsNullOrEmpty(defaultLootItemId) && defaultLootAmount > 0)
+            loot[defaultLootItemId] = defaultLootAmount;
+        if (!string.IsNullOrEmpty(secondaryLootItemId) && secondaryLootAmount > 0)
+            loot[secondaryLootItemId] = secondaryLootAmount;
+        return loot;
+    }
+
     private string BuildStatus()
     {
         StringBuilder sb = new StringBuilder();
         GameManager manager = GameManager.Instance;
         GameDatabase database = GameDatabase.Instance;
-        GameServices services = manager.Services;
+        GameServices services = manager != null ? manager.Services : null;
 
         sb.AppendLine("MVP Debug Loop");
         sb.AppendLine(lastMessage);
         sb.AppendLine();
 
-        if (manager == null || services == null)
+        if (manager == null || database == null || services == null)
         {
-            sb.AppendLine("GameManager or services are not ready.");
+            sb.AppendLine("GameManager, database, or services are not ready.");
             return sb.ToString();
         }
 

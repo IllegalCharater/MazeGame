@@ -7,6 +7,5 @@ public enum GameState
     MainMenu,
     /// <summary>玩家处于迷宫探索中</summary>
     InMaze,
-    /// <summary>商店界面（或城镇中的商店区域）</summary>
-    InShop
 }
+

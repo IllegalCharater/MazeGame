@@ -1,0 +1,28 @@
+{
+  "maze_fragments": {
+    "fragment_01": {
+      "fragmentId": "fragment_01",
+      "order": 1,
+      "displayText": "欧冶子凿山引泉，依北斗七星列七池淬火铸剑",
+      "assetKey": "maze_fragment_01"
+    },
+    "fragment_02": {
+      "fragmentId": "fragment_02",
+      "order": 2,
+      "displayText": "俯视剑身寒光深邃，如高山望深渊，似巨龙蛰伏深潭",
+      "assetKey": "maze_fragment_02"
+    },
+    "fragment_03": {
+      "fragmentId": "fragment_03",
+      "order": 3,
+      "displayText": "不贪神兵千金贵，守诺身死，唯留信义铸剑魂",
+      "assetKey": "maze_fragment_03"
+    },
+    "fragment_04": {
+      "fragmentId": "fragment_04",
+      "order": 4,
+      "displayText": "旧名本藏深谷渊，帝讳相避，换作清泉永相传",
+      "assetKey": "maze_fragment_04"
+    }
+  }
+}

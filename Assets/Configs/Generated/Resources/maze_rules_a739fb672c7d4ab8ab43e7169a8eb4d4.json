@@ -1,0 +1,16 @@
+{
+  "maze_rules": {
+    "default": {
+      "ruleId": "default",
+      "beginRunEnergyCost": 1,
+      "enterRoomEnergyCost": 5,
+      "timedEnergyCost": 2,
+      "timedEnergySeconds": 60,
+      "evacuateMultiplier": 0.5,
+      "failMultiplier": 0.3,
+      "clearMultiplier": 1.0,
+      "perfectMultiplier": 2.0,
+      "perfectBlueprintId": "blueprint_maze_energy"
+    }
+  }
+}

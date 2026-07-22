@@ -14,5 +14,10 @@ public partial class ExcelToJsonExporter
         { "outfits", new OutfitExportModule() },
         { "furniture", new FurnitureExportModule() },
         { "buffs", new BuffExportModule() },
+        { "maze_nodes", new MazeNodeExportModule() },
+        { "maze_puzzles", new MazePuzzleExportModule() },
+        { "maze_traps", new MazeTrapExportModule() },
+        { "maze_fragments", new MazeFragmentExportModule() },
+        { "maze_rules", new MazeRuleExportModule() },
     };
 }

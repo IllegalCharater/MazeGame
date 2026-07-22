@@ -8,12 +8,20 @@ public sealed class DefaultMazeRewardResolver : IMazeRewardResolver
             return null;
 
         rawResult.rewardItems.Clear();
-        float multiplier = ResolveMultiplier(rawResult.reason);
+        float multiplier = rawResult.rewardMultiplier >= 0f
+            ? rawResult.rewardMultiplier
+            : ResolveMultiplier(rawResult.reason);
         foreach (KeyValuePair<string, int> kv in rawResult.collectedItems)
         {
             int amount = UnityEngine.Mathf.FloorToInt(kv.Value * multiplier);
             if (amount > 0)
                 rawResult.rewardItems[kv.Key] = amount;
+        }
+
+        if (rawResult.reason == MazeRunEndReason.PerfectClear && !string.IsNullOrEmpty(rawResult.perfectBlueprintId))
+        {
+            if (!rawResult.rewardBlueprintIds.Contains(rawResult.perfectBlueprintId))
+                rawResult.rewardBlueprintIds.Add(rawResult.perfectBlueprintId);
         }
 
         return rawResult;
@@ -25,6 +33,8 @@ public sealed class DefaultMazeRewardResolver : IMazeRewardResolver
         {
             case MazeRunEndReason.Clear:
                 return 1f;
+            case MazeRunEndReason.PerfectClear:
+                return 2f;
             case MazeRunEndReason.Evacuate:
                 return 0.5f;
             case MazeRunEndReason.EnergyEmpty:

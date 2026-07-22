@@ -6,6 +6,8 @@ public sealed class GameManager : MonoBehaviour
     // public int Currency => currency;
     public GameState CurrentState = GameState.MainMenu;
     public GameDatabase gameDatabase;
+    public UIManager uiManager;
+    public SceneFlowManager sceneFlowManager;
     
     public GameServices Services { get; private set; }
 
@@ -18,14 +20,19 @@ public sealed class GameManager : MonoBehaviour
         }
 
         Instance = this;
-        InitializeGameData();
+        InitializeGame();
         DontDestroyOnLoad(gameObject);
     }
 
-    private void InitializeGameData()
+    private void InitializeGame()
     {
         gameDatabase = GameDatabase.GetInstance();
-        gameDatabase.init();
+        gameDatabase.Init();
+        uiManager=UIManager.GetInstance();
+        uiManager.Init();
+        sceneFlowManager=SceneFlowManager.GetInstance();
+        sceneFlowManager.Init();
+        
         Services = new GameServices();
         Services.Initialize(gameDatabase, gameDatabase.GetPlayerData());
     }

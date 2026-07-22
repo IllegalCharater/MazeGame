@@ -22,7 +22,7 @@ public class GameDatabase
         return Instance;
     }
 
-    public void init()
+    public void Init()
     {
         databases.Clear();
         playerDatabases.Clear();

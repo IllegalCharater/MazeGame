@@ -18,5 +18,10 @@ public static class DataConfig
         { "outfits", typeof(OutfitData) },
         { "furniture", typeof(FurnitureData) },
         { "buffs", typeof(BuffData) },
+        { "maze_nodes", typeof(MazeNodeData) },
+        { "maze_puzzles", typeof(MazePuzzleData) },
+        { "maze_traps", typeof(MazeTrapData) },
+        { "maze_fragments", typeof(MazeFragmentData) },
+        { "maze_rules", typeof(MazeRuleData) },
     };
 }
