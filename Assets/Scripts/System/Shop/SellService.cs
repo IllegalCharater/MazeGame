@@ -4,6 +4,7 @@ public class SellService
     {
         return GameManager.Instance != null
             && GameManager.Instance.Services != null
+            && GameManager.Instance.Services.Shop != null
             && GameManager.Instance.Services.Shop.SellFood(slotId);
     }
 }

@@ -1,4 +1,4 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 public enum MazeRunState
 {
@@ -14,7 +14,8 @@ public enum MazeRunEndReason
     Clear,
     PerfectClear,
     Evacuate,
-    EnergyEmpty
+    EnergyEmpty,
+    Failed
 }
 
 public enum ItemCategory
@@ -38,12 +39,8 @@ public enum CollectionCategory
 {
     Food,
     Outfit,
-    Furniture
-}
-
-public interface IGameService
-{
-    void Initialize(GameDatabase database, PlayerDatabase player);
+    Furniture,
+    Blueprint
 }
 
 public interface IReadOnlyInventory
@@ -51,11 +48,6 @@ public interface IReadOnlyInventory
     int GetAmount(string itemId);
     bool Has(string itemId, int amount);
     IReadOnlyDictionary<string, int> GetSnapshot();
-}
-
-public interface IMazeRewardResolver
-{
-    MazeRunResult Resolve(MazeRunResult rawResult);
 }
 
 public interface IRequirementChecker

@@ -33,7 +33,6 @@ public sealed class ShopUIController : BaseUIController
         GameEvents.OnCraftingChanged += Refresh;
         GameEvents.OnCollectionChanged += OnCollectionChanged;
         WireButtons();
-        Refresh();
     }
 
     public override void OnOpen()
@@ -50,15 +49,9 @@ public sealed class ShopUIController : BaseUIController
         base.Dismiss();
     }
 
-    public void BindStateText(Text text)
-    {
-        shopStateText = text;
-        Refresh();
-    }
-
     public void PlaceDefaultFood()
     {
-        GameServices services = GameManager.Instance?.Services;
+        var services = GameManager.Instance?.Services;
         if (services?.Shop == null)
         {
             ShowHint("Shop service is not ready.");

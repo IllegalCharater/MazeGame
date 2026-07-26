@@ -16,6 +16,7 @@
         "node_02"
       ],
       "unlockRequirementIds": [],
+      "roomPickupItems": {},
       "note": "迷宫初始位置"
     },
     "node_02": {
@@ -36,6 +37,7 @@
         "node_03"
       ],
       "unlockRequirementIds": [],
+      "roomPickupItems": {},
       "note": "食材奖励"
     },
     "node_03": {
@@ -56,6 +58,12 @@
         "node_04"
       ],
       "unlockRequirementIds": [],
+      "roomPickupItems": {
+        "correct_items": 1,
+        "wrong_items": 1,
+        "old_coin": 1,
+        "empty_bowl": 1
+      },
       "note": "点击宝箱获得食材"
     },
     "node_04": {
@@ -74,6 +82,7 @@
         "node_05"
       ],
       "unlockRequirementIds": [],
+      "roomPickupItems": {},
       "note": "开启解密一的门"
     },
     "node_05": {
@@ -91,9 +100,8 @@
       "nextNodeIds": [
         "node_06"
       ],
-      "unlockRequirementIds": [
-        "node_04"
-      ],
+      "unlockRequirementIds": [],
+      "roomPickupItems": {},
       "note": "圆坛道具放置解密"
     },
     "node_06": {
@@ -112,6 +120,7 @@
         "node_07"
       ],
       "unlockRequirementIds": [],
+      "roomPickupItems": {},
       "note": "九烛台与水潭"
     },
     "node_07": {
@@ -130,6 +139,7 @@
         "node_08"
       ],
       "unlockRequirementIds": [],
+      "roomPickupItems": {},
       "note": "回复20体力"
     },
     "node_08": {
@@ -150,6 +160,7 @@
         "node_09"
       ],
       "unlockRequirementIds": [],
+      "roomPickupItems": {},
       "note": "食材奖励"
     },
     "node_09": {
@@ -168,6 +179,7 @@
         "node_10"
       ],
       "unlockRequirementIds": [],
+      "roomPickupItems": {},
       "note": "撤离仅可带走50%的食材"
     },
     "node_10": {
@@ -186,6 +198,7 @@
         "node_11"
       ],
       "unlockRequirementIds": [],
+      "roomPickupItems": {},
       "note": "宝箱逃脱qte"
     },
     "node_11": {
@@ -204,6 +217,7 @@
         "node_12"
       ],
       "unlockRequirementIds": [],
+      "roomPickupItems": {},
       "note": "八方块踩选"
     },
     "node_12": {
@@ -222,6 +236,7 @@
         "node_13"
       ],
       "unlockRequirementIds": [],
+      "roomPickupItems": {},
       "note": "礁石遮字解密"
     },
     "node_13": {
@@ -240,6 +255,7 @@
         "node_14"
       ],
       "unlockRequirementIds": [],
+      "roomPickupItems": {},
       "note": "引导玩家前往解密4的房间"
     },
     "node_14": {
@@ -260,6 +276,7 @@
         "node_15"
       ],
       "unlockRequirementIds": [],
+      "roomPickupItems": {},
       "note": "点击宝箱获得食材"
     },
     "node_15": {
@@ -278,6 +295,7 @@
         "node_16"
       ],
       "unlockRequirementIds": [],
+      "roomPickupItems": {},
       "note": "撤离仅可带走50%的食材"
     },
     "node_16": {
@@ -294,6 +312,7 @@
       "mapY": 0.86,
       "nextNodeIds": [],
       "unlockRequirementIds": [],
+      "roomPickupItems": {},
       "note": "收齐拼图后可完美通关"
     }
   }

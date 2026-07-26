@@ -37,6 +37,22 @@ MonoBehaviour:
     m_Address: Assets/UI/Prefabs/ShopUI.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
+  - m_GUID: 21180726ce3e6684da8e52e78372cbff
+    m_Address: Assets/UI/Prefabs/MazePuzzleItemSocketUI.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: a26d35a1303ab754897716f71adc8c33
+    m_Address: Assets/UI/Prefabs/MazePuzzleCandleNumberUI.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 69a1ebcbf18b1e04c93e058dadf0649e
+    m_Address: Assets/UI/Prefabs/MazePuzzleFloorChoiceUI.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
+  - m_GUID: 0259e420ee79cc54e86913b46333e55e
+    m_Address: Assets/UI/Prefabs/MazePuzzleRockWordUI.prefab
+    m_ReadOnly: 0
+    m_SerializedLabels: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 60e1d9d016269dc43a47a912b66da943, type: 2}
   m_SchemaSet:

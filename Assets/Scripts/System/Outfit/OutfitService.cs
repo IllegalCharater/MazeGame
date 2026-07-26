@@ -1,4 +1,4 @@
-public sealed class OutfitService : IGameService
+public sealed class OutfitService
 {
     private PlayerDatabase player;
 

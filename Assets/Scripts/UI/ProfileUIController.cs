@@ -15,12 +15,6 @@ public sealed class ProfileUIController : BaseUIController
         Refresh();
     }
 
-    public void BindProfileText(Text text)
-    {
-        profileText = text;
-        Refresh();
-    }
-
     public void Refresh()
     {
         PlayerProfile profile = GameDatabase.Instance?.GetPlayerData()?.profile;

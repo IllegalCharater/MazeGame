@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-public sealed class BuffService : IGameService
+public sealed class BuffService
 {
     private GameDatabase database;
     private PlayerDatabase player;

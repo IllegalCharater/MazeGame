@@ -17,13 +17,16 @@ public class UIConfig
         { "HUD", typeof(HUDController) },
         { "MainMenuUI", typeof(MainMenuUIController) },
         { "MazeUI", typeof(MazeUIController) },
+        { "MazePuzzleItemSocketUI", typeof(ItemSocketPuzzleUIController) },
+        { "MazePuzzleCandleNumberUI", typeof(CandleNumberPuzzleUIController) },
+        { "MazePuzzleFloorChoiceUI", typeof(FloorChoicePuzzleUIController) },
+        { "MazePuzzleRockWordUI", typeof(RockWordPuzzleUIController) },
         { "ShopUI", typeof(ShopUIController) },
         { "InventoryUI", typeof(InventoryUIController) },
         { "CollectionUI", typeof(CollectionUIController) },
         { "CraftingUI", typeof(CraftingUIController) },
         { "ProfileUI", typeof(ProfileUIController) },
         { "ProfileDetailUI", typeof(ProfileDetailUIController) },
-        { "MvpLoopUI", typeof(MvpLoopUIController) },
     };
     
     public static string GetAddress(string viewName)

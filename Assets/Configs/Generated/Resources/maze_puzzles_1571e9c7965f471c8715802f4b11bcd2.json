@@ -11,6 +11,7 @@
         "old_coin",
         "empty_bowl"
       ],
+      "optionLabels": [],
       "failEnergyCost": 1,
       "successRewardItems": {
         "ingredient_lotus_root": 2
@@ -36,6 +37,7 @@
         "0",
         "clear"
       ],
+      "optionLabels": [],
       "failEnergyCost": 1,
       "successRewardItems": {
         "ingredient_fish": 1
@@ -58,6 +60,7 @@
         "silence",
         "escape"
       ],
+      "optionLabels": [],
       "failEnergyCost": 1,
       "successRewardItems": {
         "ingredient_honey": 1
@@ -79,6 +82,7 @@
         "清",
         "泉"
       ],
+      "optionLabels": [],
       "failEnergyCost": 1,
       "successRewardItems": {
         "ingredient_spice": 1

@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-public class CraftingService : IGameService
+public class CraftingService
 {
     private GameDatabase database;
     private PlayerDatabase player;

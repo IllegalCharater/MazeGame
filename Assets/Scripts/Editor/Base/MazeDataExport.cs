@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using UnityEngine;
 
@@ -16,21 +17,27 @@ public partial class ExcelToJsonExporter
                 if (dataList.ContainsKey(nodeId))
                     throw new Exception($"maze_nodes primary key duplicated nodeId={nodeId}, row={r + 3}");
 
+                string nodeType = Str(dt, r, "nodeType");
+                List<string> unlockRequirementIds = nodeType == "puzzle_room"
+                    ? new List<string>()
+                    : ParseList(dt, r, "unlockRequirementIds");
+
                 dataList[nodeId] = new MazeNodeData
                 {
                     nodeId = nodeId,
                     index = Mathf.Max(0, Int(dt, r, "index", 0)),
-                    nodeType = Str(dt, r, "nodeType"),
+                    nodeType = nodeType,
                     title = Str(dt, r, "title"),
                     roomId = Str(dt, r, "roomId"),
                     puzzleId = Str(dt, r, "puzzleId"),
                     trapId = Str(dt, r, "trapId"),
                     rewardItems = ParseIntDictionary(dt, r, "rewardItems"),
+                    roomPickupItems = ParseIntDictionary(dt, r, "roomPickupItems"),
                     energyDelta = Int(dt, r, "energyDelta", 0),
                     mapX = Mathf.Clamp01(Float(dt, r, "mapX", 0.5f)),
                     mapY = Mathf.Clamp01(Float(dt, r, "mapY", 0.5f)),
                     nextNodeIds = ParseList(dt, r, "nextNodeIds"),
-                    unlockRequirementIds = ParseList(dt, r, "unlockRequirementIds"),
+                    unlockRequirementIds = unlockRequirementIds,
                     note = Str(dt, r, "note")
                 };
             }
@@ -49,13 +56,21 @@ public partial class ExcelToJsonExporter
                 if (dataList.ContainsKey(puzzleId))
                     throw new Exception($"maze_puzzles primary key duplicated puzzleId={puzzleId}, row={r + 3}");
 
+                List<string> optionKeys = ParseList(dt, r, "optionKeys");
+                List<string> optionLabels = dt.Columns.Contains("optionLabels")
+                    ? ParseList(dt, r, "optionLabels")
+                    : new List<string>();
+                if (optionLabels.Count > 0 && optionLabels.Count != optionKeys.Count)
+                    throw new Exception($"maze_puzzles optionLabels count mismatch puzzleId={puzzleId}, row={r + 3}");
+
                 dataList[puzzleId] = new MazePuzzleData
                 {
                     puzzleId = puzzleId,
                     puzzleType = Str(dt, r, "puzzleType"),
                     answer = Str(dt, r, "answer"),
                     hintText = Str(dt, r, "hintText"),
-                    optionKeys = ParseList(dt, r, "optionKeys"),
+                    optionKeys = optionKeys,
+                    optionLabels = optionLabels,
                     failEnergyCost = Mathf.Max(0, Int(dt, r, "failEnergyCost", 1)),
                     successRewardItems = ParseIntDictionary(dt, r, "successRewardItems"),
                     fragmentId = Str(dt, r, "fragmentId"),

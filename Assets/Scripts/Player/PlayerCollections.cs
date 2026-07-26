@@ -1,10 +1,11 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 public sealed class PlayerCollections
 {
     private readonly HashSet<string> foods = new HashSet<string>();
     private readonly HashSet<string> outfits = new HashSet<string>();
     private readonly HashSet<string> furniture = new HashSet<string>();
+    private readonly HashSet<string> blueprints = new HashSet<string>();
 
     public bool Unlock(CollectionCategory category, string id)
     {
@@ -37,6 +38,8 @@ public sealed class PlayerCollections
                 return outfits;
             case CollectionCategory.Furniture:
                 return furniture;
+            case CollectionCategory.Blueprint:
+                return blueprints;
             default:
                 return foods;
         }

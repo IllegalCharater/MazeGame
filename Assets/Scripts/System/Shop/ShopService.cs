@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-public sealed class ShopService : IGameService
+public sealed class ShopService
 {
     private GameDatabase database;
     private PlayerDatabase player;

@@ -16,6 +16,7 @@ public class MazeNodeData : BaseData
     public float mapY;
     public List<string> nextNodeIds;
     public List<string> unlockRequirementIds;
+    public Dictionary<string, int> roomPickupItems;
     public string note;
 }
 
@@ -27,6 +28,7 @@ public class MazePuzzleData : BaseData
     public string answer;
     public string hintText;
     public List<string> optionKeys;
+    public List<string> optionLabels;
     public int failEnergyCost = 1;
     public Dictionary<string, int> successRewardItems;
     public string fragmentId;

@@ -1,6 +1,6 @@
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
-public sealed class BlueprintService : IGameService
+public sealed class BlueprintService
 {
     private GameDatabase database;
     private PlayerDatabase player;
@@ -28,7 +28,7 @@ public sealed class BlueprintService : IGameService
             return false;
 
         player.blueprints.Add(blueprintId);
-        GameEvents.RaiseCollectionChanged(CollectionCategory.Food);
+        GameEvents.RaiseCollectionChanged(CollectionCategory.Blueprint);
         return true;
     }
 

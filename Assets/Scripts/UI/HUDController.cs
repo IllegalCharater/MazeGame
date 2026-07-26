@@ -40,9 +40,7 @@ public sealed class HUDController : BaseUIController
         GameEvents.OnEnergyChanged += UpdateEnergy;
         GameEvents.OnGameStateChanged += OnGameStateChanged;
         GameEvents.OnInventoryChanged += OnInventoryChanged;
-        GameEvents.OnMazeRunEnded += OnMazeRunEnded;
         BindClickEvent(profileButton, OpenProfileDetail);
-        RefreshNow();
     }
 
     public override void OnOpen()
@@ -56,7 +54,6 @@ public sealed class HUDController : BaseUIController
         GameEvents.OnEnergyChanged -= UpdateEnergy;
         GameEvents.OnGameStateChanged -= OnGameStateChanged;
         GameEvents.OnInventoryChanged -= OnInventoryChanged;
-        GameEvents.OnMazeRunEnded -= OnMazeRunEnded;
         base.Dismiss();
     }
 
@@ -138,12 +135,6 @@ public sealed class HUDController : BaseUIController
     private void OnInventoryChanged()
     {
         ShowToast("Inventory updated.");
-    }
-
-    private void OnMazeRunEnded(MazeRunResult result)
-    {
-        if (result != null)
-            ShowToast($"Maze ended: {result.reason}");
     }
 
     private void ShowToast(string message)

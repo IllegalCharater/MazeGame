@@ -14,7 +14,6 @@ public sealed class InventoryUIController : BaseUIController
     public override void EventMapper()
     {
         GameEvents.OnInventoryChanged += Refresh;
-        Refresh();
     }
 
     public override void OnOpen()

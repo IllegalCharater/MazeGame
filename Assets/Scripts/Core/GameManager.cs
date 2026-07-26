@@ -8,6 +8,8 @@ public sealed class GameManager : MonoBehaviour
     public GameDatabase gameDatabase;
     public UIManager uiManager;
     public SceneFlowManager sceneFlowManager;
+    public FrameworkContext framework;
+    public EcsWorld world;
     
     public GameServices Services { get; private set; }
 
@@ -28,13 +30,37 @@ public sealed class GameManager : MonoBehaviour
     {
         gameDatabase = GameDatabase.GetInstance();
         gameDatabase.Init();
+
+        framework = new FrameworkContext();
+        framework.Init();
+
+        world = new EcsWorld();
+        world.Init();
+
+        Services = new GameServices();
+        Services.Initialize(gameDatabase, gameDatabase.GetPlayerData(), framework, world);
+
         uiManager=UIManager.GetInstance();
         uiManager.Init();
         sceneFlowManager=SceneFlowManager.GetInstance();
         sceneFlowManager.Init();
-        
-        Services = new GameServices();
-        Services.Initialize(gameDatabase, gameDatabase.GetPlayerData());
+    }
+
+    private void Update()
+    {
+        float deltaTime = Time.deltaTime;
+        framework?.Tick(deltaTime);
+        world?.Tick(deltaTime);
+    }
+
+    private void OnDestroy()
+    {
+        if (Instance != this)
+            return;
+
+        world?.Dispose();
+        framework?.Dispose();
+        Instance = null;
     }
 
     public void SetGameState(GameState next)

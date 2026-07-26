@@ -15,7 +15,6 @@ public sealed class CollectionUIController : BaseUIController
     public override void EventMapper()
     {
         GameEvents.OnCollectionChanged += OnCollectionChanged;
-        Refresh();
     }
 
     public override void OnOpen()
