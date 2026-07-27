@@ -108,6 +108,7 @@ public sealed class MazeSystem : ISystem
         lastResult = null;
         lastMessage = "Maze run started.";
 
+        GrantDirectPuzzleRoomItems(run, resolvedStartNodeId);
         ApplyNodeEnergyDelta(run, resolvedStartNodeId);
         PublishStarted();
         return CommandResult.Succeeded(lastMessage, GetViewModel());
@@ -137,6 +138,7 @@ public sealed class MazeSystem : ISystem
         run.visitedNodeIds.Add(nodeId);
         run.exitPuzzleOpened = false;
         ClearTrapState(run);
+        GrantDirectPuzzleRoomItems(run, nodeId);
         ApplyNodeEnergyDelta(run, nodeId);
         if (run.state == MazeRunState.Running)
         {
@@ -497,6 +499,37 @@ public sealed class MazeSystem : ISystem
                 continue;
 
             vm.reachableNodeIds.Add(data.nodeId);
+        }
+    }
+
+    // 测试期：解密房间的道具本该在前置房间（如 node_03 的 roomPickupItems）拾取，
+    // 直达会跳过那些房间，导致托盘上的道具全是灰的、一件都放不进槽位。
+    // 这里在进入解密房间时按 puzzle 的 optionKeys 直接补齐所需道具。
+    // 关掉 MazeTestSettings.directPuzzleRoomEntry 后此方法不产生任何影响。
+    private void GrantDirectPuzzleRoomItems(MazeRunComponent run, string nodeId)
+    {
+        if (!MazeTestSettings.directPuzzleRoomEntry)
+            return;
+        if (!nodeData.TryGetValue(nodeId, out MazeNodeData node) || node == null)
+            return;
+        if (node.nodeType != MazeTestSettings.PuzzleRoomNodeType || string.IsNullOrEmpty(node.puzzleId))
+            return;
+        if (!puzzleData.TryGetValue(node.puzzleId, out MazePuzzleData puzzle) || puzzle?.optionKeys == null)
+            return;
+        // 只有 item_socket 关会把 optionKeys 当成"手上的道具"来查 run.puzzleItems；
+        // 其余三关的 optionKeys 是数字或文字，补进背包只会污染状态。
+        if (puzzle.puzzleType != ItemSocketPuzzleSystem.TypeId)
+            return;
+
+        for (int i = 0; i < puzzle.optionKeys.Count; i++)
+        {
+            string key = puzzle.optionKeys[i];
+            if (string.IsNullOrEmpty(key))
+                continue;
+            // 已经正常拾取过的道具不叠加，保持数量语义干净。
+            if (run.puzzleItems.TryGetValue(key, out int owned) && owned > 0)
+                continue;
+            run.puzzleItems[key] = 1;
         }
     }
 
