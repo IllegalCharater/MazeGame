@@ -9,6 +9,7 @@ public sealed class CandleNumberPuzzleUIController : MazePuzzleUIControllerBase
     private readonly List<Button> numberButtons = new List<Button>();
     private Button poolButton;
     private Button clearButton;
+    private GameObject numberPanel;
 
     protected override string ExpectedPuzzleType => CandleNumberPuzzleSystem.TypeId;
     protected override string DefaultTitle => "解密二 · 九烛深潭";
@@ -21,6 +22,7 @@ public sealed class CandleNumberPuzzleUIController : MazePuzzleUIControllerBase
             numberButtons.Add(FindButton("NumberButton_" + i));
         poolButton = FindButton("PoolButton");
         clearButton = FindButton("ClearButton");
+        numberPanel = FindObject("NumberPanel");
     }
 
     protected override void MapPuzzleEvents()
@@ -41,6 +43,10 @@ public sealed class CandleNumberPuzzleUIController : MazePuzzleUIControllerBase
 
     protected override void RenderPuzzle(MazePuzzleRoomViewModel vm)
     {
+        // 数字键盘是弹层：交互水潭之后才出现。
+        if (numberPanel != null)
+            numberPanel.SetActive(vm.poolOpened);
+
         for (int i = 0; i < candleButtons.Count; i++)
         {
             Button button = candleButtons[i];

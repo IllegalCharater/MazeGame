@@ -111,15 +111,19 @@ public sealed class MazePuzzleSystemsTests
     [Test]
     public void FourPuzzlePrefabsMatchUiMappingsAndAddressableEntries()
     {
+        // 关 1 已按策划案重做成七槽 + 七枚具名道具托盘，节点名从 OptionButton_* 改成
+        // SlotButton_* / ItemButton_*，这里跟着改；其余三关节点名未变。
         AssertPuzzlePrefab("MazePuzzleItemSocketUI", typeof(ItemSocketPuzzleUIController),
-            "CloseButton", "SubmitButton", "OptionButton_0", "OptionButton_3", "RemoveButton");
+            "CloseButton", "SubmitButton", "SlotButton_0", "SlotButton_6",
+            "ItemButton_0", "ItemButton_6", "RemoveButton");
         AssertPuzzlePrefab("MazePuzzleCandleNumberUI", typeof(CandleNumberPuzzleUIController),
             "CloseButton", "SubmitButton", "CandleButton_0", "CandleButton_8",
-            "PoolButton", "NumberButton_0", "NumberButton_9", "ClearButton");
+            "PoolButton", "NumberPanel", "NumberButton_0", "NumberButton_9", "ClearButton");
         AssertPuzzlePrefab("MazePuzzleFloorChoiceUI", typeof(FloorChoicePuzzleUIController),
             "CloseButton", "OptionButton_0", "OptionButton_7");
         AssertPuzzlePrefab("MazePuzzleRockWordUI", typeof(RockWordPuzzleUIController),
-            "CloseButton", "SubmitButton", "LightButton", "OptionButton_0", "OptionButton_6");
+            "CloseButton", "SubmitButton", "LightButton", "NoteButton",
+            "RockIndicator_0", "RockIndicator_2", "OptionButton_0", "OptionButton_6");
     }
 
     private static PlayerDatabase CreatePlayer()

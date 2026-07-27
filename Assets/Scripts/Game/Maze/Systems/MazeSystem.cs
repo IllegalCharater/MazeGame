@@ -445,18 +445,22 @@ public sealed class MazeSystem : ISystem
             reason = "Current node is missing.";
             return false;
         }
-        if (!currentNode.nextNodeIds.Contains(nodeId))
-        {
-            reason = "Node is not connected.";
-            return false;
-        }
         if (!TryGetNodeComponent(nodeId, out MazeNodeComponent targetNode))
         {
             reason = "Target node is missing.";
             return false;
         }
 
-        if (targetNode.nodeType == "puzzle_room")
+        // 测试期：解密房间不要求与当前节点相连，可从任意节点直达（见 MazeTestSettings）。
+        bool isPuzzleRoom = targetNode.nodeType == MazeTestSettings.PuzzleRoomNodeType;
+        bool skipConnectivity = isPuzzleRoom && MazeTestSettings.directPuzzleRoomEntry;
+        if (!skipConnectivity && !currentNode.nextNodeIds.Contains(nodeId))
+        {
+            reason = "Node is not connected.";
+            return false;
+        }
+
+        if (isPuzzleRoom)
             return true;
 
         for (int i = 0; i < targetNode.unlockRequirementIds.Count; i++)
@@ -475,6 +479,25 @@ public sealed class MazeSystem : ISystem
         }
 
         return true;
+    }
+
+    // 测试期：把四个解密房间补进可达列表，让迷宫地图上的按钮直接亮起来。
+    // 关掉 MazeTestSettings.directPuzzleRoomEntry 后此方法不产生任何影响。
+    private void AppendDirectPuzzleRooms(MazeViewModel vm, MazeRunComponent run)
+    {
+        if (!MazeTestSettings.directPuzzleRoomEntry || run.state != MazeRunState.Running)
+            return;
+
+        foreach (MazeNodeData data in nodeData.Values)
+        {
+            if (data == null
+                || data.nodeType != MazeTestSettings.PuzzleRoomNodeType
+                || data.nodeId == run.currentNodeId
+                || vm.reachableNodeIds.Contains(data.nodeId))
+                continue;
+
+            vm.reachableNodeIds.Add(data.nodeId);
+        }
     }
 
     public bool TryGetNodeIdByIndex(int index, out string nodeId)
@@ -540,6 +563,7 @@ public sealed class MazeSystem : ISystem
                 if (CanMoveToNode(node.nextNodeIds[i], out _))
                     vm.reachableNodeIds.Add(node.nextNodeIds[i]);
             }
+            AppendDirectPuzzleRooms(vm, run);
 
             vm.canCollectReward = CanCollectReward(run, node.nodeId);
             vm.canActivateSwitch = node.nodeType == "switch" && !run.activatedNodeIds.Contains(node.nodeId);
