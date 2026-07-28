@@ -58,12 +58,7 @@
         "node_04"
       ],
       "unlockRequirementIds": [],
-      "roomPickupItems": {
-        "correct_items": 1,
-        "wrong_items": 1,
-        "old_coin": 1,
-        "empty_bowl": 1
-      },
+      "roomPickupItems": {},
       "note": "点击宝箱获得食材"
     },
     "node_04": {
@@ -101,7 +96,15 @@
         "node_06"
       ],
       "unlockRequirementIds": [],
-      "roomPickupItems": {},
+      "roomPickupItems": {
+        "天枢": 1,
+        "天璇": 1,
+        "天玑": 1,
+        "天权": 1,
+        "玉衡": 1,
+        "开阳": 1,
+        "瑶光": 1
+      },
       "note": "圆坛道具放置解密"
     },
     "node_06": {

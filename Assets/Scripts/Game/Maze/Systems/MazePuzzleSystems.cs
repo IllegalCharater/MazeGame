@@ -12,7 +12,9 @@ public interface IMazePuzzleSystem : ISystem
 public sealed class ItemSocketPuzzleStateComponent : IComponent
 {
     public string puzzleId;
-    public string selectedItemKey;
+    // 北斗七槽，下标即天枢→瑶光的摆放顺序，空槽存 string.Empty。
+    // 判定要按顺序拼接，所以必须是定长有序表，长度由 ItemSocketPuzzleSystem.SlotCount 维护。
+    public readonly List<string> slotItemKeys = new List<string>();
     public string feedback;
     public bool solved;
 }
@@ -154,10 +156,6 @@ public abstract class MazePuzzleSystemBase : IMazePuzzleSystem
 
         switch (key)
         {
-            case "correct_items": return "正确道具";
-            case "wrong_items": return "干扰道具";
-            case "old_coin": return "旧钱币";
-            case "empty_bowl": return "空碗";
             case "profit": return "利益";
             case "fame": return "名望";
             case "power": return "权力";
@@ -180,6 +178,8 @@ public abstract class MazePuzzleSystemBase : IMazePuzzleSystem
 public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
 {
     public const string TypeId = "item_socket";
+    // 北斗七星槽位数。改这里要同步改 ItemSocketPuzzleUIController.SlotCount 与 prefab 的 SlotButton_* 数量。
+    public const int SlotCount = 7;
     private ItemSocketPuzzleStateComponent state;
 
     public override string PuzzleType => TypeId;
@@ -189,27 +189,52 @@ public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
     {
     }
 
-    public CommandResult SelectItem(string puzzleId, string itemKey, MazeRunComponent run)
+    /// <summary>把道具放进指定槽位。slotIndex 为 -1 时放进第一个空槽（旧的"选中即摆放"语义）。</summary>
+    public CommandResult SelectItem(string puzzleId, string itemKey, int slotIndex, MazeRunComponent run)
     {
         MazePuzzleData data = GetPuzzle(puzzleId);
         EnsurePuzzle(puzzleId);
         if (!ContainsOption(data, itemKey))
             return Fail("Item is not a puzzle option.", puzzleId, run);
-        if (run?.puzzleItems == null || !run.puzzleItems.TryGetValue(itemKey, out int amount) || amount <= 0)
+        if (!HasItem(run, itemKey))
             return Fail("Item has not been collected.", puzzleId, run);
 
-        state.selectedItemKey = itemKey;
+        int target = slotIndex >= 0 ? slotIndex : FindFirstEmptySlot();
+        if (target < 0)
+            return Fail("All sockets are filled.", puzzleId, run);
+        if (target >= SlotCount)
+            return Fail("Socket index is out of range.", puzzleId, run);
+
+        // 同一件道具只能占一个槽：换位摆放时先把旧槽腾空，避免一件道具铺满七槽。
+        int previous = state.slotItemKeys.IndexOf(itemKey);
+        if (previous >= 0)
+            state.slotItemKeys[previous] = string.Empty;
+
+        state.slotItemKeys[target] = itemKey;
         state.feedback = "Item placed on the altar.";
         MazePuzzleRoomViewModel vm = GetViewModel(puzzleId, run);
         Publish(vm);
         return CommandResult.Succeeded(state.feedback, vm);
     }
 
-    public CommandResult RemoveItem(string puzzleId, MazeRunComponent run)
+    /// <summary>清空指定槽位。slotIndex 为 -1 时清空全部槽位。</summary>
+    public CommandResult RemoveItem(string puzzleId, int slotIndex, MazeRunComponent run)
     {
         EnsurePuzzle(puzzleId);
-        state.selectedItemKey = string.Empty;
-        state.feedback = "Altar slot cleared.";
+        if (slotIndex >= SlotCount)
+            return Fail("Socket index is out of range.", puzzleId, run);
+
+        if (slotIndex < 0)
+        {
+            ClearSlots();
+            state.feedback = "Altar cleared.";
+        }
+        else
+        {
+            state.slotItemKeys[slotIndex] = string.Empty;
+            state.feedback = "Altar slot cleared.";
+        }
+
         MazePuzzleRoomViewModel vm = GetViewModel(puzzleId, run);
         Publish(vm);
         return CommandResult.Succeeded(state.feedback, vm);
@@ -221,13 +246,27 @@ public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
         EnsurePuzzle(puzzleId);
         if (data == null)
             return MazePuzzleEvaluation.Invalid("Puzzle data is not ready.");
-        if (string.IsNullOrEmpty(state.selectedItemKey))
+
+        List<string> placed = PlacedKeys();
+        if (placed.Count == 0)
             return MazePuzzleEvaluation.Invalid("Place an item on the altar first.");
-        if (run?.puzzleItems == null || !run.puzzleItems.TryGetValue(state.selectedItemKey, out int amount) || amount <= 0)
-            return MazePuzzleEvaluation.Invalid("The selected item is not available.");
-        return string.Equals(data.answer, state.selectedItemKey, StringComparison.Ordinal)
-            ? MazePuzzleEvaluation.Correct("The altar accepts the item.")
-            : MazePuzzleEvaluation.Incorrect("The altar rejects the item.");
+        for (int i = 0; i < placed.Count; i++)
+        {
+            if (!HasItem(run, placed[i]))
+                return MazePuzzleEvaluation.Invalid("The selected item is not available.");
+        }
+
+        // 答案支持两种写法：单道具（"correct_items"）沿用旧表；
+        // 七槽有序摆放写成逗号分隔（"天枢,天璇,..."），按槽位顺序拼接后整体比对。
+        List<string> expected = ParseAnswer(data.answer);
+        if (expected.Count != placed.Count)
+            return MazePuzzleEvaluation.Incorrect("The altar rejects the arrangement.");
+        for (int i = 0; i < expected.Count; i++)
+        {
+            if (!string.Equals(expected[i], placed[i], StringComparison.Ordinal))
+                return MazePuzzleEvaluation.Incorrect("The altar rejects the arrangement.");
+        }
+        return MazePuzzleEvaluation.Correct("The altar accepts the arrangement.");
     }
 
     public override MazePuzzleRoomViewModel GetViewModel(string puzzleId, MazeRunComponent run)
@@ -235,15 +274,17 @@ public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
         MazePuzzleData data = GetPuzzle(puzzleId);
         EnsurePuzzle(puzzleId);
         MazePuzzleRoomViewModel vm = CreateBaseViewModel(data);
-        vm.selectedInput = state.selectedItemKey;
+        for (int i = 0; i < state.slotItemKeys.Count; i++)
+            vm.slotItemKeys.Add(state.slotItemKeys[i]);
+        // selectedInput 保留为"已摆放道具的顺序串"，供 SelectionText 与旧断言读取。
+        vm.selectedInput = string.Join(",", PlacedKeys().ToArray());
         vm.feedback = state.feedback;
         vm.isSolved = state.solved;
         FillOptions(vm, data,
-            key => key == state.selectedItemKey,
-            key => run?.puzzleItems != null && run.puzzleItems.TryGetValue(key, out int amount) && amount > 0,
+            key => state.slotItemKeys.Contains(key),
+            key => HasItem(run, key),
             null);
-        vm.canSubmit = !vm.isSolved && !string.IsNullOrEmpty(state.selectedItemKey)
-            && run?.puzzleItems != null && run.puzzleItems.TryGetValue(state.selectedItemKey, out int amount) && amount > 0;
+        vm.canSubmit = !vm.isSolved && CanSubmit(run);
         return vm;
     }
 
@@ -252,6 +293,10 @@ public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
         EnsurePuzzle(puzzleId);
         state.feedback = evaluation != null ? evaluation.message : string.Empty;
         state.solved = evaluation != null && evaluation.status == MazePuzzleEvaluationStatus.Correct;
+        // 一次提交＝一次完整的献祭尝试，判错就把祭坛复位重摆（体力已在判定层扣过）。
+        // Invalid 表示"还没摆够/道具不可用"，不算一次尝试，槽位保留。
+        if (evaluation != null && evaluation.status == MazePuzzleEvaluationStatus.Incorrect)
+            ClearSlots();
         Publish(GetViewModel(puzzleId, run));
     }
 
@@ -266,14 +311,79 @@ public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
         if (state == null)
             return;
         state.puzzleId = string.Empty;
-        state.selectedItemKey = string.Empty;
+        ClearSlots();
         state.feedback = string.Empty;
         state.solved = false;
     }
 
+    private void ClearSlots()
+    {
+        // 槽位表始终保持 SlotCount 长度，下标即槽位号，别用 Clear() 缩短它。
+        state.slotItemKeys.Clear();
+        for (int i = 0; i < SlotCount; i++)
+            state.slotItemKeys.Add(string.Empty);
+    }
+
+    private int FindFirstEmptySlot()
+    {
+        for (int i = 0; i < state.slotItemKeys.Count; i++)
+        {
+            if (string.IsNullOrEmpty(state.slotItemKeys[i]))
+                return i;
+        }
+        return -1;
+    }
+
+    private List<string> PlacedKeys()
+    {
+        List<string> placed = new List<string>();
+        for (int i = 0; i < state.slotItemKeys.Count; i++)
+        {
+            if (!string.IsNullOrEmpty(state.slotItemKeys[i]))
+                placed.Add(state.slotItemKeys[i]);
+        }
+        return placed;
+    }
+
+    private bool CanSubmit(MazeRunComponent run)
+    {
+        List<string> placed = PlacedKeys();
+        if (placed.Count == 0)
+            return false;
+        for (int i = 0; i < placed.Count; i++)
+        {
+            if (!HasItem(run, placed[i]))
+                return false;
+        }
+        return true;
+    }
+
+    private static bool HasItem(MazeRunComponent run, string itemKey)
+    {
+        return run?.puzzleItems != null
+            && !string.IsNullOrEmpty(itemKey)
+            && run.puzzleItems.TryGetValue(itemKey, out int amount)
+            && amount > 0;
+    }
+
+    private static List<string> ParseAnswer(string answer)
+    {
+        List<string> parsed = new List<string>();
+        if (string.IsNullOrEmpty(answer))
+            return parsed;
+        string[] parts = answer.Split(',');
+        for (int i = 0; i < parts.Length; i++)
+        {
+            string trimmed = parts[i].Trim();
+            if (!string.IsNullOrEmpty(trimmed))
+                parsed.Add(trimmed);
+        }
+        return parsed;
+    }
+
     private void EnsurePuzzle(string puzzleId)
     {
-        if (state.puzzleId == puzzleId)
+        if (state.puzzleId == puzzleId && state.slotItemKeys.Count == SlotCount)
             return;
         ResetState();
         state.puzzleId = puzzleId;

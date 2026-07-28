@@ -3,13 +3,16 @@
     "puzzle_01": {
       "puzzleId": "puzzle_01",
       "puzzleType": "item_socket",
-      "answer": "correct_items",
-      "hintText": "右侧显示关卡提示，放置房间内拾取的正确道具",
+      "answer": "天枢,天璇,天玑,天权,玉衡,开阳,瑶光",
+      "hintText": "一枢二璇三玑四权，五衡六阳七光",
       "optionKeys": [
-        "correct_items",
-        "wrong_items",
-        "old_coin",
-        "empty_bowl"
+        "天枢",
+        "天璇",
+        "天玑",
+        "天权",
+        "玉衡",
+        "开阳",
+        "瑶光"
       ],
       "optionLabels": [],
       "failEnergyCost": 1,

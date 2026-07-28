@@ -109,6 +109,59 @@ public sealed class MazePuzzleSystemsTests
     }
 
     [Test]
+    public void ItemSocketPuzzleTracksSevenOrderedSlots()
+    {
+        Assert.IsTrue(service.CollectCurrentNodeReward().success);
+        Assert.IsTrue(service.MoveToNode("node_02").success);
+
+        MazePuzzleRoomViewModel vm = service.GetCurrentPuzzleViewModel();
+        Assert.AreEqual(ItemSocketPuzzleSystem.SlotCount, vm.slotItemKeys.Count);
+        Assert.IsTrue(vm.slotItemKeys.TrueForAll(string.IsNullOrEmpty));
+
+        // 不指定槽位＝落进第一个空槽；显式指定则落进该槽。
+        Assert.IsTrue(service.SelectItemSocketItem("puzzle_01", "correct_items").success);
+        Assert.IsTrue(service.SelectItemSocketItem("puzzle_01", "wrong_items", 4).success);
+        vm = service.GetCurrentPuzzleViewModel();
+        Assert.AreEqual("correct_items", vm.slotItemKeys[0]);
+        Assert.AreEqual("wrong_items", vm.slotItemKeys[4]);
+
+        // 同一件道具换槽不会占两个槽。
+        Assert.IsTrue(service.SelectItemSocketItem("puzzle_01", "wrong_items", 6).success);
+        vm = service.GetCurrentPuzzleViewModel();
+        Assert.IsEmpty(vm.slotItemKeys[4]);
+        Assert.AreEqual("wrong_items", vm.slotItemKeys[6]);
+
+        // 越界槽位与未拾取道具都要被拒绝，且不改动已有摆放。
+        Assert.IsFalse(service.SelectItemSocketItem("puzzle_01", "correct_items", ItemSocketPuzzleSystem.SlotCount).success);
+        Assert.IsFalse(service.SelectItemSocketItem("puzzle_01", "missing", 1).success);
+        Assert.AreEqual("correct_items", service.GetCurrentPuzzleViewModel().slotItemKeys[0]);
+
+        // 单槽清空只影响该槽，整体清空抹掉全部。
+        Assert.IsTrue(service.RemoveItemSocketItem("puzzle_01", 6).success);
+        vm = service.GetCurrentPuzzleViewModel();
+        Assert.IsEmpty(vm.slotItemKeys[6]);
+        Assert.AreEqual("correct_items", vm.slotItemKeys[0]);
+        Assert.IsTrue(service.RemoveItemSocketItem("puzzle_01").success);
+        Assert.IsTrue(service.GetCurrentPuzzleViewModel().slotItemKeys.TrueForAll(string.IsNullOrEmpty));
+
+        // 槽位为空时提交属于 Invalid，不扣体力也不算一次尝试。
+        int energyBefore = player.profile.energy;
+        Assert.IsFalse(service.SubmitPuzzle("puzzle_01").success);
+        Assert.AreEqual(energyBefore, player.profile.energy);
+
+        // 多摆一件即与单件答案长度不符，判错并复位祭坛。
+        Assert.IsTrue(service.SelectItemSocketItem("puzzle_01", "correct_items", 0).success);
+        Assert.IsTrue(service.SelectItemSocketItem("puzzle_01", "wrong_items", 1).success);
+        Assert.IsFalse(service.SubmitPuzzle("puzzle_01").success);
+        Assert.AreEqual(energyBefore - 1, player.profile.energy);
+        Assert.IsTrue(service.GetCurrentPuzzleViewModel().slotItemKeys.TrueForAll(string.IsNullOrEmpty));
+
+        Assert.IsTrue(service.SelectItemSocketItem("puzzle_01", "correct_items", 3).success);
+        Assert.IsTrue(service.SubmitPuzzle("puzzle_01").success);
+        Assert.Contains("fragment_01", service.GetViewModel().fragments);
+    }
+
+    [Test]
     public void FourPuzzlePrefabsMatchUiMappingsAndAddressableEntries()
     {
         // 关 1 已按策划案重做成七槽 + 七枚具名道具托盘，节点名从 OptionButton_* 改成

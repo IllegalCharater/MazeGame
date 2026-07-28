@@ -78,6 +78,8 @@ public sealed class MazePuzzleRoomViewModel
     public int currentEnergy;
     public int maxEnergy;
     public List<bool> candleStates = new List<bool>();
+    // 解密一的七槽内容，下标即槽位号，空槽为 string.Empty。其余三关不填。
+    public List<string> slotItemKeys = new List<string>();
     public List<MazePuzzleOptionViewModel> options = new List<MazePuzzleOptionViewModel>();
     public Dictionary<string, int> successRewards = new Dictionary<string, int>();
 }

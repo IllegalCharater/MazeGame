@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public sealed class ItemSocketPuzzleUIController : MazePuzzleUIControllerBase
 {
-    private const int SlotCount = 7;
+    private const int SlotCount = ItemSocketPuzzleSystem.SlotCount;
     private readonly List<Button> slotButtons = new List<Button>();
     private readonly List<Text> slotTexts = new List<Text>();
     private readonly List<Button> itemButtons = new List<Button>();
@@ -33,7 +33,13 @@ public sealed class ItemSocketPuzzleUIController : MazePuzzleUIControllerBase
             int index = i;
             BindClickEvent(itemButtons[i], () => Select(index));
         }
-        BindClickEvent(removeButton, Clear);
+        // 点已填充的槽位＝把那件道具取回托盘，省掉"清空重摆"的来回。
+        for (int i = 0; i < slotButtons.Count; i++)
+        {
+            int index = i;
+            BindClickEvent(slotButtons[i], () => ClearSlot(index));
+        }
+        BindClickEvent(removeButton, ClearAll);
     }
 
     protected override void RenderPuzzle(MazePuzzleRoomViewModel vm)
@@ -43,29 +49,38 @@ public sealed class ItemSocketPuzzleUIController : MazePuzzleUIControllerBase
 
         RenderSlots(vm);
         if (removeButton != null)
-            removeButton.interactable = !vm.isSolved && !string.IsNullOrEmpty(vm.selectedInput);
+            removeButton.interactable = !vm.isSolved && HasAnyPlaced(vm);
     }
 
-    // 槽位当前只反映"已放置的道具"这一件事：判定层仍是单选语义，
-    // 七槽有序放置要等 ItemSocketPuzzleStateComponent 支持多槽后才能接上。
     private void RenderSlots(MazePuzzleRoomViewModel vm)
     {
-        string placed = vm.selectedInput;
         for (int i = 0; i < slotButtons.Count; i++)
         {
             Button slot = slotButtons[i];
             if (slot == null)
                 continue;
 
-            bool filled = !string.IsNullOrEmpty(placed) && i == 0;
+            string placed = i < vm.slotItemKeys.Count ? vm.slotItemKeys[i] : string.Empty;
+            bool filled = !string.IsNullOrEmpty(placed);
             UIHelper.SetText(slotTexts[i], filled ? ResolvePlacedLabel(vm, placed) : "+");
-            slot.interactable = false;
+            // 空槽不接受点击：摆放入口是托盘按钮，槽位只负责取回。
+            slot.interactable = filled && !vm.isSolved;
             Image image = slot.GetComponent<Image>();
             if (image != null)
                 image.color = filled
                     ? new Color(0.85f, 0.72f, 0.25f, 1f)
                     : new Color(0.32f, 0.38f, 0.46f, 1f);
         }
+    }
+
+    private static bool HasAnyPlaced(MazePuzzleRoomViewModel vm)
+    {
+        for (int i = 0; i < vm.slotItemKeys.Count; i++)
+        {
+            if (!string.IsNullOrEmpty(vm.slotItemKeys[i]))
+                return true;
+        }
+        return false;
     }
 
     private static string ResolvePlacedLabel(MazePuzzleRoomViewModel vm, string key)
@@ -85,7 +100,13 @@ public sealed class ItemSocketPuzzleUIController : MazePuzzleUIControllerBase
         Execute(commands.Execute(new SelectItemSocketPuzzleItemCommand(viewModel.puzzleId, viewModel.options[index].key)));
     }
 
-    private void Clear()
+    private void ClearSlot(int slotIndex)
+    {
+        if (commands != null && viewModel != null)
+            Execute(commands.Execute(new RemoveItemSocketPuzzleItemCommand(viewModel.puzzleId, slotIndex)));
+    }
+
+    private void ClearAll()
     {
         if (commands != null && viewModel != null)
             Execute(commands.Execute(new RemoveItemSocketPuzzleItemCommand(viewModel.puzzleId)));

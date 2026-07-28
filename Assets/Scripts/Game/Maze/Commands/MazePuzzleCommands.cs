@@ -2,21 +2,37 @@ public sealed class SelectItemSocketPuzzleItemCommand : ICommand
 {
     public string puzzleId;
     public string itemKey;
+    // 目标槽位；-1 表示放进第一个空槽。
+    public int slotIndex;
 
     public SelectItemSocketPuzzleItemCommand(string puzzleId, string itemKey)
+        : this(puzzleId, itemKey, -1)
+    {
+    }
+
+    public SelectItemSocketPuzzleItemCommand(string puzzleId, string itemKey, int slotIndex)
     {
         this.puzzleId = puzzleId;
         this.itemKey = itemKey;
+        this.slotIndex = slotIndex;
     }
 }
 
 public sealed class RemoveItemSocketPuzzleItemCommand : ICommand
 {
     public string puzzleId;
+    // 要清空的槽位；-1 表示清空全部。
+    public int slotIndex;
 
     public RemoveItemSocketPuzzleItemCommand(string puzzleId)
+        : this(puzzleId, -1)
+    {
+    }
+
+    public RemoveItemSocketPuzzleItemCommand(string puzzleId, int slotIndex)
     {
         this.puzzleId = puzzleId;
+        this.slotIndex = slotIndex;
     }
 }
 
@@ -107,7 +123,7 @@ public sealed class SelectItemSocketPuzzleItemCommandHandler : MazeCommandHandle
     public CommandResult Handle(SelectItemSocketPuzzleItemCommand command)
     {
         return IsReady(out CommandResult result)
-            ? maze.SelectItemSocketItem(command.puzzleId, command.itemKey)
+            ? maze.SelectItemSocketItem(command.puzzleId, command.itemKey, command.slotIndex)
             : result;
     }
 }
@@ -121,7 +137,7 @@ public sealed class RemoveItemSocketPuzzleItemCommandHandler : MazeCommandHandle
     public CommandResult Handle(RemoveItemSocketPuzzleItemCommand command)
     {
         return IsReady(out CommandResult result)
-            ? maze.RemoveItemSocketItem(command.puzzleId)
+            ? maze.RemoveItemSocketItem(command.puzzleId, command.slotIndex)
             : result;
     }
 }

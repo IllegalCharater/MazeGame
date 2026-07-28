@@ -143,18 +143,28 @@
 
     public CommandResult SelectItemSocketItem(string puzzleId, string itemKey)
     {
-        if (!TryGetPuzzleContext(puzzleId, ItemSocketPuzzleSystem.TypeId, out MazePuzzleData puzzle, out MazeRunComponent run, out _, out string reason))
-            return PuzzleFailure(reason);
-
-        return itemSocketPuzzleSystem.SelectItem(puzzle.puzzleId, itemKey, run);
+        return SelectItemSocketItem(puzzleId, itemKey, -1);
     }
 
-    public CommandResult RemoveItemSocketItem(string puzzleId)
+    public CommandResult SelectItemSocketItem(string puzzleId, string itemKey, int slotIndex)
     {
         if (!TryGetPuzzleContext(puzzleId, ItemSocketPuzzleSystem.TypeId, out MazePuzzleData puzzle, out MazeRunComponent run, out _, out string reason))
             return PuzzleFailure(reason);
 
-        return itemSocketPuzzleSystem.RemoveItem(puzzle.puzzleId, run);
+        return itemSocketPuzzleSystem.SelectItem(puzzle.puzzleId, itemKey, slotIndex, run);
+    }
+
+    public CommandResult RemoveItemSocketItem(string puzzleId)
+    {
+        return RemoveItemSocketItem(puzzleId, -1);
+    }
+
+    public CommandResult RemoveItemSocketItem(string puzzleId, int slotIndex)
+    {
+        if (!TryGetPuzzleContext(puzzleId, ItemSocketPuzzleSystem.TypeId, out MazePuzzleData puzzle, out MazeRunComponent run, out _, out string reason))
+            return PuzzleFailure(reason);
+
+        return itemSocketPuzzleSystem.RemoveItem(puzzle.puzzleId, slotIndex, run);
     }
 
     public CommandResult TogglePuzzleCandle(string puzzleId, int candleIndex)

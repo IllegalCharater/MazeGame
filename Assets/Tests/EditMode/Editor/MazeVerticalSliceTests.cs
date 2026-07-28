@@ -380,7 +380,11 @@ public sealed class MazeVerticalSliceTests
         Assert.IsTrue(commands.Execute(new ActivateMazeSwitchCommand("node_04")).success);
 
         Assert.IsTrue(commands.Execute(new MoveToMazeNodeCommand("node_05")).success);
-        Assert.IsTrue(commands.Execute(new SelectItemSocketPuzzleItemCommand("puzzle_01", "correct_items")).success);
+        // 关 1 的七枚北斗道具现在挂在 node_05 本房间，按天枢→瑶光顺序摆满七槽才判对。
+        Assert.IsTrue(commands.Execute(new CollectMazeNodeRewardCommand("node_05")).success);
+        string[] stars = { "天枢", "天璇", "天玑", "天权", "玉衡", "开阳", "瑶光" };
+        for (int i = 0; i < stars.Length; i++)
+            Assert.IsTrue(commands.Execute(new SelectItemSocketPuzzleItemCommand("puzzle_01", stars[i], i)).success, stars[i]);
         Assert.IsTrue(commands.Execute(new SubmitMazePuzzleCommand("puzzle_01")).success);
 
         Assert.IsTrue(commands.Execute(new MoveToMazeNodeCommand("node_06")).success);
@@ -411,8 +415,9 @@ public sealed class MazeVerticalSliceTests
         Assert.Contains("fragment_02", vm.fragments);
         Assert.Contains("fragment_03", vm.fragments);
         Assert.Contains("fragment_04", vm.fragments);
-        Assert.IsFalse(vm.loot.ContainsKey("correct_items"));
-        Assert.IsFalse(vm.loot.ContainsKey("wrong_items"));
+        // 解密道具走 puzzleItems，不该混进可带走的食材 loot。
+        Assert.IsFalse(vm.loot.ContainsKey("天枢"));
+        Assert.IsFalse(vm.loot.ContainsKey("瑶光"));
         world.Dispose();
         framework.Dispose();
     }
