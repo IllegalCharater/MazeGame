@@ -1,4 +1,5 @@
 using System;
+using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEngine;
@@ -60,7 +61,7 @@ public static class MazePuzzlePrefabBuilder
 
         // 托盘压在 FeedbackText 上沿之上，7 枚道具步进 95 给 RemoveButton 让出右端。
         for (int i = 0; i < StarSlotNames.Length; i++)
-            AddButton("ItemButton_" + i, panel, StarSlotNames[i], new Vector2(86f, 56f), new Vector2(-330f + i * 95f, -210f), "ItemText_" + i);
+            AddButton("ItemButton_" + i, panel, StarSlotNames[i], new Vector2(86f, 56f), new Vector2(-330f + i * 95f, -210f), "ItemText_" + i,"Assets/UI/asset/common/Button/star_" + (i + 1) + ".png");
 
         AddButton("RemoveButton", panel, "移除道具", new Vector2(140f, 50f), new Vector2(390f, -210f));
         SavePrefab(root, PrefabPaths[0]);
@@ -219,12 +220,32 @@ public static class MazePuzzlePrefabBuilder
         return text;
     }
 
-    private static Button AddButton(string name, Transform parent, string label, Vector2 size, Vector2 position, string labelName = null)
+    private static Button AddButton(string name, Transform parent, string label, Vector2 size, Vector2 position, string labelName = null, string imgPath = null)
     {
         GameObject go = CreateRect(name, parent, size, position);
         go.AddComponent<CanvasRenderer>();
         Image image = go.AddComponent<Image>();
-        image.color = new Color(0.32f, 0.38f, 0.46f, 1f);
+        // 如果没有传入图片
+        if (string.IsNullOrEmpty(imgPath))
+        {
+            image.color = new Color(0.32f, 0.38f, 0.46f, 1f);
+        }
+        else
+        {
+            Sprite sp = string.IsNullOrEmpty(imgPath)
+            ? null
+            : AssetDatabase.LoadAssetAtPath<Sprite>(imgPath);
+            //如果路径不对
+            if(sp != null)
+            {
+                image.sprite = sp;
+            }
+            else
+            {
+                Debug.LogWarning($"[MazePuzzlePrefabBuilder] Sprite 未找到，回落纯色: {imgPath}");
+                image.color = new Color(0.32f, 0.38f, 0.46f, 1f);
+            }
+        }
         Button button = go.AddComponent<Button>();
         Text text = AddText(labelName ?? name + "Text", go.transform, label, size, Vector2.zero, 22, TextAnchor.MiddleCenter);
         text.raycastTarget = false;
@@ -274,13 +295,24 @@ public static class MazePuzzlePrefabBuilder
             throw new InvalidOperationException("Addressable settings are not available.");
 
         for (int i = 0; i < PrefabPaths.Length; i++)
-        {
-            string path = PrefabPaths[i];
-            string guid = AssetDatabase.AssetPathToGUID(path);
-            var entry = settings.CreateOrMoveEntry(guid, settings.DefaultGroup, false, false);
-            entry.address = path;
-            EditorUtility.SetDirty(entry.parentGroup);
-        }
+            RegisterAddressable(settings, PrefabPaths[i], PrefabPaths[i]);
+
+        // 七枚星图按 star_1..star_7 注册，address 用简短 key，避免路径改名就断链。
+        for (int i = 1; i <= 7; i++)
+            RegisterAddressable(settings, $"{ButtonArtDir}/star_{i}.png", $"art/star_{i}");
+
         EditorUtility.SetDirty(settings);
+    }
+    private static void RegisterAddressable(AddressableAssetSettings settings, string assetPath, string address)
+    {
+        string guid = AssetDatabase.AssetPathToGUID(assetPath);
+        if (string.IsNullOrEmpty(guid))
+        {
+            Debug.LogWarning($"[MazePuzzlePrefabBuilder] 资产不存在，跳过注册: {assetPath}");
+            return;
+        }
+        var entry = settings.CreateOrMoveEntry(guid, settings.DefaultGroup, false, false);
+        entry.address = address;
+        EditorUtility.SetDirty(entry.parentGroup);
     }
 }

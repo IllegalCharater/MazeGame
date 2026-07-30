@@ -78,6 +78,7 @@ public sealed class ItemSocketPuzzleUIController : MazePuzzleUIControllerBase
             // 空槽不接受点击：摆放入口是托盘按钮，槽位只负责取回。
             slot.interactable = filled && !vm.isSolved;
             Image image = slot.GetComponent<Image>();
+            
             if (image != null)
                 image.color = filled
                     ? new Color(0.85f, 0.72f, 0.25f, 1f)

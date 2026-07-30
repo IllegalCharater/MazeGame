@@ -97,6 +97,12 @@ public abstract class MazePuzzleUIControllerBase : BaseUIController
         Image image = button.GetComponent<Image>();
         if (image == null)
             return;
+        //如果有挂图直接返回
+        if (image.sprite != null)
+        {
+            image.color = option.available ? Color.white : new Color(1f, 1f, 1f, 0.45f);
+            return;
+        }
         if (!option.available)
             image.color = new Color(0.28f, 0.28f, 0.28f, 1f);
         else if (option.failed)
