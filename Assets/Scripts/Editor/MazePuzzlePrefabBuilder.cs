@@ -1,5 +1,4 @@
 using System;
-using System.Runtime.CompilerServices;
 using UnityEditor;
 using UnityEditor.AddressableAssets;
 using UnityEngine;
@@ -14,6 +13,9 @@ public static class MazePuzzlePrefabBuilder
         "Assets/UI/Prefabs/MazePuzzleFloorChoiceUI.prefab",
         "Assets/UI/Prefabs/MazePuzzleRockWordUI.prefab"
     };
+
+    // 通用按钮切图目录。AddButton 的 imgPath 与 ConfigureAddressables 都从这里取，别写第二份。
+    private const string ButtonArtDir = "Assets/UI/asset/common/Button";
 
     private static Font font;
 
@@ -61,7 +63,7 @@ public static class MazePuzzlePrefabBuilder
 
         // 托盘压在 FeedbackText 上沿之上，7 枚道具步进 95 给 RemoveButton 让出右端。
         for (int i = 0; i < StarSlotNames.Length; i++)
-            AddButton("ItemButton_" + i, panel, StarSlotNames[i], new Vector2(86f, 56f), new Vector2(-330f + i * 95f, -210f), "ItemText_" + i,"Assets/UI/asset/common/Button/star_" + (i + 1) + ".png");
+            AddButton("ItemButton_" + i, panel, StarSlotNames[i], new Vector2(86f, 56f), new Vector2(-330f + i * 95f, -210f), "ItemText_" + i, $"{ButtonArtDir}/star_{i + 1}.png", new Color(0f,0f,0f,1f));
 
         AddButton("RemoveButton", panel, "移除道具", new Vector2(140f, 50f), new Vector2(390f, -210f));
         SavePrefab(root, PrefabPaths[0]);
@@ -205,7 +207,7 @@ public static class MazePuzzlePrefabBuilder
         return go;
     }
 
-    private static Text AddText(string name, Transform parent, string value, Vector2 size, Vector2 position, int fontSize, TextAnchor alignment)
+    private static Text AddText(string name, Transform parent, string value, Vector2 size, Vector2 position, int fontSize, TextAnchor alignment, Color? color = null)
     {
         GameObject go = CreateRect(name, parent, size, position);
         go.AddComponent<CanvasRenderer>();
@@ -214,13 +216,13 @@ public static class MazePuzzlePrefabBuilder
         text.text = value;
         text.fontSize = fontSize;
         text.alignment = alignment;
-        text.color = new Color(0.94f, 0.92f, 0.86f, 1f);
+        text.color = color ?? new Color(0.94f, 0.92f, 0.86f, 1f);
         text.horizontalOverflow = HorizontalWrapMode.Wrap;
         text.verticalOverflow = VerticalWrapMode.Truncate;
         return text;
     }
 
-    private static Button AddButton(string name, Transform parent, string label, Vector2 size, Vector2 position, string labelName = null, string imgPath = null)
+    private static Button AddButton(string name, Transform parent, string label, Vector2 size, Vector2 position, string labelName = null, string imgPath = null, Color? textColor = null)
     {
         GameObject go = CreateRect(name, parent, size, position);
         go.AddComponent<CanvasRenderer>();
@@ -247,7 +249,7 @@ public static class MazePuzzlePrefabBuilder
             }
         }
         Button button = go.AddComponent<Button>();
-        Text text = AddText(labelName ?? name + "Text", go.transform, label, size, Vector2.zero, 22, TextAnchor.MiddleCenter);
+        Text text = AddText(labelName ?? name + "Text", go.transform, label, size, Vector2.zero, 22, TextAnchor.MiddleCenter, textColor);
         text.raycastTarget = false;
         return button;
     }
@@ -295,24 +297,13 @@ public static class MazePuzzlePrefabBuilder
             throw new InvalidOperationException("Addressable settings are not available.");
 
         for (int i = 0; i < PrefabPaths.Length; i++)
-            RegisterAddressable(settings, PrefabPaths[i], PrefabPaths[i]);
-
-        // 七枚星图按 star_1..star_7 注册，address 用简短 key，避免路径改名就断链。
-        for (int i = 1; i <= 7; i++)
-            RegisterAddressable(settings, $"{ButtonArtDir}/star_{i}.png", $"art/star_{i}");
-
-        EditorUtility.SetDirty(settings);
-    }
-    private static void RegisterAddressable(AddressableAssetSettings settings, string assetPath, string address)
-    {
-        string guid = AssetDatabase.AssetPathToGUID(assetPath);
-        if (string.IsNullOrEmpty(guid))
         {
-            Debug.LogWarning($"[MazePuzzlePrefabBuilder] 资产不存在，跳过注册: {assetPath}");
-            return;
+            string path = PrefabPaths[i];
+            string guid = AssetDatabase.AssetPathToGUID(path);
+            var entry = settings.CreateOrMoveEntry(guid, settings.DefaultGroup, false, false);
+            entry.address = path;
+            EditorUtility.SetDirty(entry.parentGroup);
         }
-        var entry = settings.CreateOrMoveEntry(guid, settings.DefaultGroup, false, false);
-        entry.address = address;
-        EditorUtility.SetDirty(entry.parentGroup);
+        EditorUtility.SetDirty(settings);
     }
 }

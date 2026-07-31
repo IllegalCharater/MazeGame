@@ -80,9 +80,17 @@ public sealed class ItemSocketPuzzleUIController : MazePuzzleUIControllerBase
             Image image = slot.GetComponent<Image>();
             
             if (image != null)
-                image.color = filled
-                    ? new Color(0.85f, 0.72f, 0.25f, 1f)
+            {
+                Sprite placedSprite = filled ? ResolvePlacedSprite(vm, placed) : null;
+                image.sprite = placedSprite;
+                // sprite 存在时 color 必须是白色：Image.color 是乘在图上的，深蓝底会把星图染暗。
+                image.color = placedSprite != null
+                    ? Color.white
                     : new Color(0.32f, 0.38f, 0.46f, 1f);
+                slotTexts[i].color = placedSprite != null
+                    ? new Color(0f, 0f, 0f, 1f)
+                    : new Color(0.94f, 0.92f, 0.86f, 1f);
+            }
         }
     }
 
@@ -106,6 +114,17 @@ public sealed class ItemSocketPuzzleUIController : MazePuzzleUIControllerBase
         return key;
     }
 
+    private Sprite ResolvePlacedSprite(MazePuzzleRoomViewModel vm, string key)
+    {
+        for (int i = 0; i < vm.options.Count && i < itemButtons.Count; i++)
+        {
+            if (vm.options[i] == null || vm.options[i].key != key)
+                continue;
+            Image img = itemButtons[i] != null ? itemButtons[i].GetComponent<Image>() : null;
+            return img != null ? img.sprite : null;
+        }
+        return null;
+    }
     private void Select(int index)
     {
         if (commands == null || viewModel == null || index < 0 || index >= viewModel.options.Count)
