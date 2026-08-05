@@ -1,33 +1,29 @@
 using System.Collections.Generic;
 
-public class CraftingService
-{
+public class CraftingService {
     private GameDatabase database;
     private PlayerDatabase player;
     private readonly CraftingQueue queue = new CraftingQueue();
     private readonly List<CraftingJob> history = new List<CraftingJob>();
 
-    public void Initialize(GameDatabase database, PlayerDatabase player)
-    {
+    public void Initialize(GameDatabase database, PlayerDatabase player) {
         this.database = database;
         this.player = player;
     }
 
-    public bool CanCraft(string recipeId)
-    {
+    public bool CanCraft(string recipeId) {
         RecipeData recipe = database?.Get<RecipeData>("recipes", recipeId);
-        if (recipe == null || player?.inventory == null)
+        if (recipe == null || player?.Inventory == null)
             return false;
 
-        return player.inventory.HasAll(recipe.ingredients);
+        return player.Inventory.HasAll(recipe.ingredients);
     }
 
-    public CraftingJob StartCraft(string recipeId)
-    {
+    public CraftingJob StartCraft(string recipeId) {
         RecipeData recipe = database?.Get<RecipeData>("recipes", recipeId);
-        if (recipe == null || player?.inventory == null)
+        if (recipe == null || player?.Inventory == null)
             return null;
-        if (!player.inventory.TryConsume(recipe.ingredients))
+        if (!player.Inventory.TryConsume(recipe.ingredients))
             return null;
 
         CraftingJob job = new CraftingJob(recipeId);
@@ -41,17 +37,15 @@ public class CraftingService
         return job;
     }
 
-    public bool CompleteCraft(string jobId)
-    {
+    public bool CompleteCraft(string jobId) {
         CraftingJob job = queue.Find(jobId);
-        if (job == null || job.completed || player?.inventory == null)
+        if (job == null || job.completed || player?.Inventory == null)
             return false;
 
-        for (int i = 0; i < job.outputItems.Count; i++)
-        {
+        for (int i = 0; i < job.outputItems.Count; i++) {
             int amount = i < job.outputAmounts.Count ? job.outputAmounts[i] : 1;
-            player.inventory.TryAdd(job.outputItems[i], amount);
-            player.collections.Unlock(CollectionCategory.Food, job.outputItems[i]);
+            player.Inventory.TryAdd(job.outputItems[i], amount);
+            player.Collections.Unlock(CollectionCategory.Food, job.outputItems[i]);
         }
 
         job.completed = true;
@@ -61,13 +55,11 @@ public class CraftingService
         return true;
     }
 
-    public IReadOnlyList<CraftingJob> GetCraftHistory()
-    {
+    public IReadOnlyList<CraftingJob> GetCraftHistory() {
         return history;
     }
 
-    public IReadOnlyList<CraftingJob> GetQueue()
-    {
+    public IReadOnlyList<CraftingJob> GetQueue() {
         return queue.Jobs;
     }
 }

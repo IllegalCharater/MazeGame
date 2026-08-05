@@ -2,120 +2,113 @@ using System;
 using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.SceneManagement;
+/// <summary>
+/// 全局场景状态
+/// </summary>
+public enum SceneState {
+    /// <summary>主菜单 / 标题界面</summary>
+    MainMenu,
+    /// <summary>玩家处于迷宫探索中</summary>
+    InMaze,
+}
 
-public sealed class SceneFlowManager
-{
+public sealed class SceneFlowManager {
     public static SceneFlowManager Instance { get; private set; }
 
     public Scene MainScene { get; private set; }
     public Scene DynamicScene { get; private set; }
 
-    private GameState defaultScene = GameState.MainMenu;
-    private GameState currentState;
+    private SceneState defaultScene = SceneState.MainMenu;
+    private SceneState currentState;
     private bool initialized;
     private bool isChangingState;
 
-    private SceneFlowManager()
-    {
+    private SceneFlowManager() {
         currentState = defaultScene;
     }
 
-    public static SceneFlowManager GetInstance()
-    {
+    public static SceneFlowManager GetInstance() {
         if (Instance == null)
             Instance = new SceneFlowManager();
 
         return Instance;
     }
 
-    public void Init()
-    {
+    public void Init() {
         if (initialized)
             return;
 
         initialized = true;
         ensureMainScene();
 
-        GoToMain();
+        // GoToMain();
+        Injector.Instance.Register(Instance);
     }
 
-    public void GoToMain()
-    {
-        LoadScene(GameState.MainMenu);
+    public void GoToMain() {
+        LoadScene(SceneState.MainMenu);
         UIManager.GotoView("MainMenuUI");
     }
 
-    public void GoToMaze()
-    {
-        LoadScene(GameState.InMaze);
+    public void GoToMaze() {
+        LoadScene(SceneState.InMaze);
         UIManager.GotoView("MazeUI");
     }
 
-    public void GoToShop()
-    {
-        LoadScene(GameState.MainMenu);
+    public void GoToShop() {
+        LoadScene(SceneState.MainMenu);
         UIManager.GotoView("ShopUI");
     }
 
     private bool isInited = false;
-    public void LoadScene(GameState target)
-    {
-        if (isChangingState)
-        {
+    public void LoadScene(SceneState target) {
+        if (isChangingState) {
             Debug.LogWarning($"[SceneFlowManager] Ignore state change while busy: {currentState} -> {target}");
             return;
         }
 
-        if (currentState == target&&isInited)
-        {
-            SyncGameState(currentState, target);
+        if (currentState == target && isInited) {
             return;
         }
-        
+
         isInited = true;
         isChangingState = true;
-        GameState previous = currentState;
+        SceneState previous = currentState;
 
-        try
-        {
+        try {
             UnloadCurrentDynamicScene(target);
             LoadDynamicScene(target);
             currentState = target;
-            SyncGameState(previous, target);
+            // ChangeSceneState(previous, target);
         }
-        finally
-        {
+        finally {
             isChangingState = false;
         }
     }
 
-    private void ensureMainScene()
-    {
+    private void ensureMainScene() {
         string mainSceneName = SceneConfig.mainSceneName;
         MainScene = SceneManager.GetSceneByName(mainSceneName);
         if (MainScene.IsValid() && MainScene.isLoaded)
             return;
 
         Scene activeScene = SceneManager.GetActiveScene();
-        if (activeScene.IsValid() && activeScene.name == mainSceneName)
-        {
+        if (activeScene.IsValid() && activeScene.name == mainSceneName) {
             MainScene = activeScene;
             return;
         }
 
-        if (!CanLoadScene(GetScenePath(GameState.MainMenu)))
-        {
-            Debug.LogWarning($"[SceneFlowManager] Main scene is not available: {GetScenePath(GameState.MainMenu)}");
+        if (!CanLoadScene(GetScenePath(SceneState.MainMenu))) {
+            Debug.LogWarning($"[SceneFlowManager] Main scene is not available: {GetScenePath(SceneState.MainMenu)}");
             return;
         }
 
         SceneManager.LoadScene(mainSceneName, LoadSceneMode.Additive);
         MainScene = SceneManager.GetSceneByName(mainSceneName);
     }
-    
 
-    private void UnloadCurrentDynamicScene(GameState target)
-    {
+
+    private void UnloadCurrentDynamicScene(SceneState target) {
         Scene targetScene = GetLoadedSceneForState(target);
         if (DynamicScene.IsValid() && DynamicScene.isLoaded && DynamicScene != MainScene && DynamicScene != targetScene)
             SceneManager.UnloadSceneAsync(DynamicScene);
@@ -123,26 +116,22 @@ public sealed class SceneFlowManager
         DynamicScene = targetScene;
     }
 
-    private void LoadDynamicScene(GameState target)
-    {
+    private void LoadDynamicScene(SceneState target) {
         string scenePath = GetScenePath(target);
-        if (string.IsNullOrEmpty(scenePath))
-        {
+        if (string.IsNullOrEmpty(scenePath)) {
             DynamicScene = default;
             return;
         }
 
         string sceneName = SceneConfig.sceneMap[target];
         Scene loaded = SceneManager.GetSceneByName(sceneName);
-        if (loaded.IsValid() && loaded.isLoaded)
-        {
+        if (loaded.IsValid() && loaded.isLoaded) {
             DynamicScene = loaded;
             SceneManager.SetActiveScene(loaded);
             return;
         }
 
-        if (!CanLoadScene(scenePath))
-        {
+        if (!CanLoadScene(scenePath)) {
             DynamicScene = default;
             Debug.LogWarning($"[SceneFlowManager] Dynamic scene is not available, switch UI only: {scenePath}");
             return;
@@ -154,16 +143,7 @@ public sealed class SceneFlowManager
             SceneManager.SetActiveScene(DynamicScene);
     }
 
-    private void SyncGameState(GameState previous, GameState target)
-    {
-        if (GameManager.Instance != null)
-            GameManager.Instance.SetGameState(target);
-        else if (previous != target)
-            GameEvents.RaiseGameStateChanged(previous, target);
-    }
-
-    private Scene GetLoadedSceneForState(GameState state)
-    {
+    private Scene GetLoadedSceneForState(SceneState state) {
         string scenePath = GetScenePath(state);
         if (string.IsNullOrEmpty(scenePath))
             return default;
@@ -171,11 +151,10 @@ public sealed class SceneFlowManager
         return SceneManager.GetSceneByName(SceneConfig.sceneMap[state]);
     }
 
-    private static string GetScenePath(GameState state)
-    {
+    private static string GetScenePath(SceneState state) {
         string scenePath = SceneConfig.scenePath;
 
-        return scenePath +"/"+ SceneConfig.sceneMap[state]+".unity";
+        return scenePath + "/" + SceneConfig.sceneMap[state] + ".unity";
     }
 
     // private static string GetSceneNameFromPath(string scenePath)
@@ -187,11 +166,14 @@ public sealed class SceneFlowManager
     //     return scenePath.Substring(startIndex, length);
     // }
 
-    private static bool CanLoadScene(string scenePath)
-    {
+    private static bool CanLoadScene(string scenePath) {
         if (string.IsNullOrEmpty(scenePath))
             return false;
 
         return SceneUtility.GetBuildIndexByScenePath(scenePath) >= 0;
+    }
+
+    public void Dispose() {
+
     }
 }

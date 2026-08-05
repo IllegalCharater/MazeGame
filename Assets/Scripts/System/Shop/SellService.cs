@@ -1,10 +1,8 @@
-public class SellService
-{
-    public bool SellFromSlot(int slotId)
-    {
+public class SellService {
+    public bool SellFromSlot(int slotId) {
         return GameManager.Instance != null
-            && GameManager.Instance.Services != null
-            && GameManager.Instance.Services.Shop != null
-            && GameManager.Instance.Services.Shop.SellFood(slotId);
+            && GameManager.Instance.services != null
+            && GameManager.Instance.services.Shop != null
+            && GameManager.Instance.services.Shop.SellFood(slotId);
     }
 }

@@ -1,20 +1,17 @@
-public sealed class OutfitService
-{
+public sealed class OutfitService {
     private PlayerDatabase player;
 
-    public void Initialize(GameDatabase database, PlayerDatabase player)
-    {
+    public void Initialize(GameDatabase database, PlayerDatabase player) {
         this.player = player;
     }
 
-    public bool EquipOutfit(string outfitId)
-    {
-        if (player?.profile == null)
+    public bool EquipOutfit(string outfitId) {
+        if (player?.Profile == null)
             return false;
-        if (!player.collections.IsUnlocked(CollectionCategory.Outfit, outfitId))
+        if (!player.Collections.IsUnlocked(CollectionCategory.Outfit, outfitId))
             return false;
 
-        player.profile.equippedOutfitId = outfitId;
+        player.Profile.equippedOutfitId = outfitId;
         GameEvents.RaiseCollectionChanged(CollectionCategory.Outfit);
         return true;
     }

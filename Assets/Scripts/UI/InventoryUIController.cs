@@ -1,45 +1,38 @@
 using System.Text;
 using UnityEngine.UI;
 
-public sealed class InventoryUIController : BaseUIController
-{
+public sealed class InventoryUIController : BaseUIController {
     private Text inventoryText;
 
-    public override void BindUI()
-    {
+    public override void BindUI() {
         if (inventoryText == null)
             inventoryText = FindText("Inventory Text");
     }
 
-    public override void EventMapper()
-    {
+    public override void EventMapper() {
         GameEvents.OnInventoryChanged += Refresh;
     }
 
-    public override void OnOpen()
-    {
+    public override void OnOpen() {
         Refresh();
     }
 
-    public override void Dismiss()
-    {
+    public override void Dismiss() {
         GameEvents.OnInventoryChanged -= Refresh;
         base.Dismiss();
     }
 
-    public void BindInventoryText(Text text)
-    {
+    public void BindInventoryText(Text text) {
         inventoryText = text;
         Refresh();
     }
 
-    public void Refresh()
-    {
-        if (inventoryText == null || GameDatabase.Instance?.GetPlayerData()?.inventory == null)
+    public void Refresh() {
+        if (inventoryText == null || GameDatabase.Instance?.GetPlayerData()?.Inventory == null)
             return;
 
         StringBuilder sb = new StringBuilder();
-        foreach (var kv in GameDatabase.Instance.GetPlayerData().inventory.GetSnapshot())
+        foreach (var kv in GameDatabase.Instance.GetPlayerData().Inventory.GetSnapshot())
             sb.AppendLine($"{kv.Key}: {kv.Value}");
         inventoryText.text = sb.ToString();
     }

@@ -1,16 +1,14 @@
 using System;
 using System.Collections.Generic;
 
-public interface IMazePuzzleSystem : ISystem
-{
+public interface IMazePuzzleSystem : ISystem {
     string PuzzleType { get; }
     MazePuzzleRoomViewModel GetViewModel(string puzzleId, MazeRunComponent run);
     MazePuzzleEvaluation Evaluate(string puzzleId, MazeRunComponent run);
     void ApplyResolution(string puzzleId, MazePuzzleEvaluation evaluation, MazeRunComponent run);
 }
 
-public sealed class ItemSocketPuzzleStateComponent : IComponent
-{
+public sealed class ItemSocketPuzzleStateComponent : IComponent {
     public string puzzleId;
     // 北斗七槽，下标即天枢→瑶光的摆放顺序，空槽存 string.Empty。
     // 判定要按顺序拼接，所以必须是定长有序表，长度由 ItemSocketPuzzleSystem.SlotCount 维护。
@@ -19,8 +17,7 @@ public sealed class ItemSocketPuzzleStateComponent : IComponent
     public bool solved;
 }
 
-public sealed class CandleNumberPuzzleStateComponent : IComponent
-{
+public sealed class CandleNumberPuzzleStateComponent : IComponent {
     public string puzzleId;
     public List<bool> candleStates = new List<bool>();
     public bool poolOpened;
@@ -29,8 +26,7 @@ public sealed class CandleNumberPuzzleStateComponent : IComponent
     public bool solved;
 }
 
-public sealed class FloorChoicePuzzleStateComponent : IComponent
-{
+public sealed class FloorChoicePuzzleStateComponent : IComponent {
     public string puzzleId;
     public string selectedTileKey;
     public HashSet<string> failedTileKeys = new HashSet<string>();
@@ -38,8 +34,7 @@ public sealed class FloorChoicePuzzleStateComponent : IComponent
     public bool solved;
 }
 
-public sealed class RockWordPuzzleStateComponent : IComponent
-{
+public sealed class RockWordPuzzleStateComponent : IComponent {
     public string puzzleId;
     public bool lightActivated;
     public HashSet<string> blockedWordKeys = new HashSet<string>();
@@ -47,8 +42,7 @@ public sealed class RockWordPuzzleStateComponent : IComponent
     public bool solved;
 }
 
-public abstract class MazePuzzleSystemBase : IMazePuzzleSystem
-{
+public abstract class MazePuzzleSystemBase : IMazePuzzleSystem {
     private readonly GameDatabase database;
     private readonly PlayerDatabase player;
     private readonly EventBus eventBus;
@@ -58,15 +52,13 @@ public abstract class MazePuzzleSystemBase : IMazePuzzleSystem
 
     public abstract string PuzzleType { get; }
 
-    protected MazePuzzleSystemBase(GameDatabase database, PlayerDatabase player, EventBus eventBus)
-    {
+    protected MazePuzzleSystemBase(GameDatabase database, PlayerDatabase player, EventBus eventBus) {
         this.database = database;
         this.player = player;
         this.eventBus = eventBus;
     }
 
-    public void Initialize(EcsWorld world)
-    {
+    public void Initialize(EcsWorld world) {
         this.world = world;
         stateEntity = world.CreateEntity("MazePuzzleSystem:" + PuzzleType);
         CreateStateComponent();
@@ -74,12 +66,10 @@ public abstract class MazePuzzleSystemBase : IMazePuzzleSystem
         ResetState();
     }
 
-    public void Tick(float deltaTime)
-    {
+    public void Tick(float deltaTime) {
     }
 
-    public void Dispose()
-    {
+    public void Dispose() {
         eventBus?.Unsubscribe<MazeRunStartedEvent>(OnMazeRunStarted);
         if (world != null && stateEntity.IsValid && world.IsAlive(stateEntity))
             world.DestroyEntity(stateEntity);
@@ -94,42 +84,35 @@ public abstract class MazePuzzleSystemBase : IMazePuzzleSystem
     protected abstract void CreateStateComponent();
     protected abstract void ResetState();
 
-    protected MazePuzzleData GetPuzzle(string puzzleId)
-    {
+    protected MazePuzzleData GetPuzzle(string puzzleId) {
         if (string.IsNullOrEmpty(puzzleId) || database == null)
             return null;
         return database.Get<MazePuzzleData>("maze_puzzles", puzzleId);
     }
 
-    protected MazePuzzleRoomViewModel CreateBaseViewModel(MazePuzzleData data)
-    {
-        MazePuzzleRoomViewModel vm = new MazePuzzleRoomViewModel
-        {
+    protected MazePuzzleRoomViewModel CreateBaseViewModel(MazePuzzleData data) {
+        MazePuzzleRoomViewModel vm = new MazePuzzleRoomViewModel {
             puzzleId = data != null ? data.puzzleId : string.Empty,
             puzzleType = data != null ? data.puzzleType : PuzzleType,
             hintText = data != null ? data.hintText : string.Empty,
             fragmentText = data != null ? data.fragmentText : string.Empty,
-            currentEnergy = player?.profile != null ? player.profile.energy : 0,
-            maxEnergy = player?.profile != null ? player.profile.maxEnergy : 0
+            currentEnergy = player?.Profile != null ? player.Profile.energy : 0,
+            maxEnergy = player?.Profile != null ? player.Profile.maxEnergy : 0
         };
-        if (data?.successRewardItems != null)
-        {
+        if (data?.successRewardItems != null) {
             foreach (KeyValuePair<string, int> reward in data.successRewardItems)
                 vm.successRewards[reward.Key] = reward.Value;
         }
         return vm;
     }
 
-    protected void FillOptions(MazePuzzleRoomViewModel vm, MazePuzzleData data, Func<string, bool> selected, Func<string, bool> available, Func<string, bool> failed)
-    {
+    protected void FillOptions(MazePuzzleRoomViewModel vm, MazePuzzleData data, Func<string, bool> selected, Func<string, bool> available, Func<string, bool> failed) {
         if (vm == null || data?.optionKeys == null)
             return;
 
-        for (int i = 0; i < data.optionKeys.Count; i++)
-        {
+        for (int i = 0; i < data.optionKeys.Count; i++) {
             string key = data.optionKeys[i];
-            vm.options.Add(new MazePuzzleOptionViewModel
-            {
+            vm.options.Add(new MazePuzzleOptionViewModel {
                 key = key,
                 label = ResolveOptionLabel(data, i, key),
                 selected = selected != null && selected(key),
@@ -139,23 +122,19 @@ public abstract class MazePuzzleSystemBase : IMazePuzzleSystem
         }
     }
 
-    protected void Publish(MazePuzzleRoomViewModel viewModel)
-    {
+    protected void Publish(MazePuzzleRoomViewModel viewModel) {
         eventBus?.Publish(new MazePuzzleStateChangedEvent(viewModel));
     }
 
-    protected static bool ContainsOption(MazePuzzleData data, string key)
-    {
+    protected static bool ContainsOption(MazePuzzleData data, string key) {
         return data?.optionKeys != null && !string.IsNullOrEmpty(key) && data.optionKeys.Contains(key);
     }
 
-    protected static string ResolveOptionLabel(MazePuzzleData data, int index, string key)
-    {
+    protected static string ResolveOptionLabel(MazePuzzleData data, int index, string key) {
         if (data?.optionLabels != null && index >= 0 && index < data.optionLabels.Count && !string.IsNullOrEmpty(data.optionLabels[index]))
             return data.optionLabels[index];
 
-        switch (key)
-        {
+        switch (key) {
             case "profit": return "利益";
             case "fame": return "名望";
             case "power": return "权力";
@@ -169,14 +148,12 @@ public abstract class MazePuzzleSystemBase : IMazePuzzleSystem
         }
     }
 
-    private void OnMazeRunStarted(MazeRunStartedEvent evt)
-    {
+    private void OnMazeRunStarted(MazeRunStartedEvent evt) {
         ResetState();
     }
 }
 
-public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
-{
+public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase {
     public const string TypeId = "item_socket";
     // 北斗七星槽位数。改这里要同步改 ItemSocketPuzzleUIController.SlotCount 与 prefab 的 SlotButton_* 数量。
     public const int SlotCount = 7;
@@ -185,13 +162,11 @@ public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
     public override string PuzzleType => TypeId;
 
     public ItemSocketPuzzleSystem(GameDatabase database, PlayerDatabase player, EventBus eventBus)
-        : base(database, player, eventBus)
-    {
+        : base(database, player, eventBus) {
     }
 
     /// <summary>把道具放进指定槽位。slotIndex 为 -1 时放进第一个空槽（旧的"选中即摆放"语义）。</summary>
-    public CommandResult SelectItem(string puzzleId, string itemKey, int slotIndex, MazeRunComponent run)
-    {
+    public CommandResult SelectItem(string puzzleId, string itemKey, int slotIndex, MazeRunComponent run) {
         MazePuzzleData data = GetPuzzle(puzzleId);
         EnsurePuzzle(puzzleId);
         if (!ContainsOption(data, itemKey))
@@ -218,19 +193,16 @@ public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
     }
 
     /// <summary>清空指定槽位。slotIndex 为 -1 时清空全部槽位。</summary>
-    public CommandResult RemoveItem(string puzzleId, int slotIndex, MazeRunComponent run)
-    {
+    public CommandResult RemoveItem(string puzzleId, int slotIndex, MazeRunComponent run) {
         EnsurePuzzle(puzzleId);
         if (slotIndex >= SlotCount)
             return Fail("Socket index is out of range.", puzzleId, run);
 
-        if (slotIndex < 0)
-        {
+        if (slotIndex < 0) {
             ClearSlots();
             state.feedback = "Altar cleared.";
         }
-        else
-        {
+        else {
             state.slotItemKeys[slotIndex] = string.Empty;
             state.feedback = "Altar slot cleared.";
         }
@@ -240,8 +212,7 @@ public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
         return CommandResult.Succeeded(state.feedback, vm);
     }
 
-    public override MazePuzzleEvaluation Evaluate(string puzzleId, MazeRunComponent run)
-    {
+    public override MazePuzzleEvaluation Evaluate(string puzzleId, MazeRunComponent run) {
         MazePuzzleData data = GetPuzzle(puzzleId);
         EnsurePuzzle(puzzleId);
         if (data == null)
@@ -250,8 +221,7 @@ public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
         List<string> placed = PlacedKeys();
         if (placed.Count == 0)
             return MazePuzzleEvaluation.Invalid("Place an item on the altar first.");
-        for (int i = 0; i < placed.Count; i++)
-        {
+        for (int i = 0; i < placed.Count; i++) {
             if (!HasItem(run, placed[i]))
                 return MazePuzzleEvaluation.Invalid("The selected item is not available.");
         }
@@ -261,16 +231,14 @@ public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
         List<string> expected = ParseAnswer(data.answer);
         if (expected.Count != placed.Count)
             return MazePuzzleEvaluation.Incorrect("The altar rejects the arrangement.");
-        for (int i = 0; i < expected.Count; i++)
-        {
+        for (int i = 0; i < expected.Count; i++) {
             if (!string.Equals(expected[i], placed[i], StringComparison.Ordinal))
                 return MazePuzzleEvaluation.Incorrect("The altar rejects the arrangement.");
         }
         return MazePuzzleEvaluation.Correct("The altar accepts the arrangement.");
     }
 
-    public override MazePuzzleRoomViewModel GetViewModel(string puzzleId, MazeRunComponent run)
-    {
+    public override MazePuzzleRoomViewModel GetViewModel(string puzzleId, MazeRunComponent run) {
         MazePuzzleData data = GetPuzzle(puzzleId);
         EnsurePuzzle(puzzleId);
         MazePuzzleRoomViewModel vm = CreateBaseViewModel(data);
@@ -288,8 +256,7 @@ public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
         return vm;
     }
 
-    public override void ApplyResolution(string puzzleId, MazePuzzleEvaluation evaluation, MazeRunComponent run)
-    {
+    public override void ApplyResolution(string puzzleId, MazePuzzleEvaluation evaluation, MazeRunComponent run) {
         EnsurePuzzle(puzzleId);
         state.feedback = evaluation != null ? evaluation.message : string.Empty;
         state.solved = evaluation != null && evaluation.status == MazePuzzleEvaluationStatus.Correct;
@@ -300,14 +267,12 @@ public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
         Publish(GetViewModel(puzzleId, run));
     }
 
-    protected override void CreateStateComponent()
-    {
+    protected override void CreateStateComponent() {
         state = new ItemSocketPuzzleStateComponent();
         world.AddComponent(stateEntity, state);
     }
 
-    protected override void ResetState()
-    {
+    protected override void ResetState() {
         if (state == null)
             return;
         state.puzzleId = string.Empty;
@@ -316,64 +281,54 @@ public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
         state.solved = false;
     }
 
-    private void ClearSlots()
-    {
+    private void ClearSlots() {
         // 槽位表始终保持 SlotCount 长度，下标即槽位号，别用 Clear() 缩短它。
         state.slotItemKeys.Clear();
         for (int i = 0; i < SlotCount; i++)
             state.slotItemKeys.Add(string.Empty);
     }
 
-    private int FindFirstEmptySlot()
-    {
-        for (int i = 0; i < state.slotItemKeys.Count; i++)
-        {
+    private int FindFirstEmptySlot() {
+        for (int i = 0; i < state.slotItemKeys.Count; i++) {
             if (string.IsNullOrEmpty(state.slotItemKeys[i]))
                 return i;
         }
         return -1;
     }
 
-    private List<string> PlacedKeys()
-    {
+    private List<string> PlacedKeys() {
         List<string> placed = new List<string>();
-        for (int i = 0; i < state.slotItemKeys.Count; i++)
-        {
+        for (int i = 0; i < state.slotItemKeys.Count; i++) {
             if (!string.IsNullOrEmpty(state.slotItemKeys[i]))
                 placed.Add(state.slotItemKeys[i]);
         }
         return placed;
     }
 
-    private bool CanSubmit(MazeRunComponent run)
-    {
+    private bool CanSubmit(MazeRunComponent run) {
         List<string> placed = PlacedKeys();
         if (placed.Count == 0)
             return false;
-        for (int i = 0; i < placed.Count; i++)
-        {
+        for (int i = 0; i < placed.Count; i++) {
             if (!HasItem(run, placed[i]))
                 return false;
         }
         return true;
     }
 
-    private static bool HasItem(MazeRunComponent run, string itemKey)
-    {
+    private static bool HasItem(MazeRunComponent run, string itemKey) {
         return run?.puzzleItems != null
             && !string.IsNullOrEmpty(itemKey)
             && run.puzzleItems.TryGetValue(itemKey, out int amount)
             && amount > 0;
     }
 
-    private static List<string> ParseAnswer(string answer)
-    {
+    private static List<string> ParseAnswer(string answer) {
         List<string> parsed = new List<string>();
         if (string.IsNullOrEmpty(answer))
             return parsed;
         string[] parts = answer.Split(',');
-        for (int i = 0; i < parts.Length; i++)
-        {
+        for (int i = 0; i < parts.Length; i++) {
             string trimmed = parts[i].Trim();
             if (!string.IsNullOrEmpty(trimmed))
                 parsed.Add(trimmed);
@@ -381,16 +336,14 @@ public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
         return parsed;
     }
 
-    private void EnsurePuzzle(string puzzleId)
-    {
+    private void EnsurePuzzle(string puzzleId) {
         if (state.puzzleId == puzzleId && state.slotItemKeys.Count == SlotCount)
             return;
         ResetState();
         state.puzzleId = puzzleId;
     }
 
-    private CommandResult Fail(string message, string puzzleId, MazeRunComponent run)
-    {
+    private CommandResult Fail(string message, string puzzleId, MazeRunComponent run) {
         state.feedback = message;
         MazePuzzleRoomViewModel vm = GetViewModel(puzzleId, run);
         Publish(vm);
@@ -398,8 +351,7 @@ public sealed class ItemSocketPuzzleSystem : MazePuzzleSystemBase
     }
 }
 
-public sealed class CandleNumberPuzzleSystem : MazePuzzleSystemBase
-{
+public sealed class CandleNumberPuzzleSystem : MazePuzzleSystemBase {
     public const string TypeId = "numeric_input";
     private const int CandleCount = 9;
     private CandleNumberPuzzleStateComponent state;
@@ -407,12 +359,10 @@ public sealed class CandleNumberPuzzleSystem : MazePuzzleSystemBase
     public override string PuzzleType => TypeId;
 
     public CandleNumberPuzzleSystem(GameDatabase database, PlayerDatabase player, EventBus eventBus)
-        : base(database, player, eventBus)
-    {
+        : base(database, player, eventBus) {
     }
 
-    public CommandResult ToggleCandle(string puzzleId, int candleIndex, MazeRunComponent run)
-    {
+    public CommandResult ToggleCandle(string puzzleId, int candleIndex, MazeRunComponent run) {
         EnsurePuzzle(puzzleId);
         if (candleIndex < 0 || candleIndex >= CandleCount)
             return Fail("Candle index is invalid.", puzzleId, run);
@@ -421,16 +371,14 @@ public sealed class CandleNumberPuzzleSystem : MazePuzzleSystemBase
         return Success(puzzleId, run);
     }
 
-    public CommandResult OpenPool(string puzzleId, MazeRunComponent run)
-    {
+    public CommandResult OpenPool(string puzzleId, MazeRunComponent run) {
         EnsurePuzzle(puzzleId);
         state.poolOpened = true;
         state.feedback = "The pool reflects a numeric lock.";
         return Success(puzzleId, run);
     }
 
-    public CommandResult SelectNumber(string puzzleId, string number, MazeRunComponent run)
-    {
+    public CommandResult SelectNumber(string puzzleId, string number, MazeRunComponent run) {
         MazePuzzleData data = GetPuzzle(puzzleId);
         EnsurePuzzle(puzzleId);
         if (!state.poolOpened)
@@ -442,16 +390,14 @@ public sealed class CandleNumberPuzzleSystem : MazePuzzleSystemBase
         return Success(puzzleId, run);
     }
 
-    public CommandResult ClearNumber(string puzzleId, MazeRunComponent run)
-    {
+    public CommandResult ClearNumber(string puzzleId, MazeRunComponent run) {
         EnsurePuzzle(puzzleId);
         state.selectedNumber = string.Empty;
         state.feedback = "Number cleared.";
         return Success(puzzleId, run);
     }
 
-    public override MazePuzzleEvaluation Evaluate(string puzzleId, MazeRunComponent run)
-    {
+    public override MazePuzzleEvaluation Evaluate(string puzzleId, MazeRunComponent run) {
         MazePuzzleData data = GetPuzzle(puzzleId);
         EnsurePuzzle(puzzleId);
         if (data == null)
@@ -465,8 +411,7 @@ public sealed class CandleNumberPuzzleSystem : MazePuzzleSystemBase
             : MazePuzzleEvaluation.Incorrect("The pool becomes still. The answer is incorrect.");
     }
 
-    public override MazePuzzleRoomViewModel GetViewModel(string puzzleId, MazeRunComponent run)
-    {
+    public override MazePuzzleRoomViewModel GetViewModel(string puzzleId, MazeRunComponent run) {
         MazePuzzleData data = GetPuzzle(puzzleId);
         EnsurePuzzle(puzzleId);
         MazePuzzleRoomViewModel vm = CreateBaseViewModel(data);
@@ -480,22 +425,19 @@ public sealed class CandleNumberPuzzleSystem : MazePuzzleSystemBase
         return vm;
     }
 
-    public override void ApplyResolution(string puzzleId, MazePuzzleEvaluation evaluation, MazeRunComponent run)
-    {
+    public override void ApplyResolution(string puzzleId, MazePuzzleEvaluation evaluation, MazeRunComponent run) {
         EnsurePuzzle(puzzleId);
         state.feedback = evaluation != null ? evaluation.message : string.Empty;
         state.solved = evaluation != null && evaluation.status == MazePuzzleEvaluationStatus.Correct;
         Publish(GetViewModel(puzzleId, run));
     }
 
-    protected override void CreateStateComponent()
-    {
+    protected override void CreateStateComponent() {
         state = new CandleNumberPuzzleStateComponent();
         world.AddComponent(stateEntity, state);
     }
 
-    protected override void ResetState()
-    {
+    protected override void ResetState() {
         if (state == null)
             return;
         state.puzzleId = string.Empty;
@@ -508,23 +450,20 @@ public sealed class CandleNumberPuzzleSystem : MazePuzzleSystemBase
         state.solved = false;
     }
 
-    private void EnsurePuzzle(string puzzleId)
-    {
+    private void EnsurePuzzle(string puzzleId) {
         if (state.puzzleId == puzzleId)
             return;
         ResetState();
         state.puzzleId = puzzleId;
     }
 
-    private CommandResult Success(string puzzleId, MazeRunComponent run)
-    {
+    private CommandResult Success(string puzzleId, MazeRunComponent run) {
         MazePuzzleRoomViewModel vm = GetViewModel(puzzleId, run);
         Publish(vm);
         return CommandResult.Succeeded(state.feedback, vm);
     }
 
-    private CommandResult Fail(string message, string puzzleId, MazeRunComponent run)
-    {
+    private CommandResult Fail(string message, string puzzleId, MazeRunComponent run) {
         state.feedback = message;
         MazePuzzleRoomViewModel vm = GetViewModel(puzzleId, run);
         Publish(vm);
@@ -532,20 +471,17 @@ public sealed class CandleNumberPuzzleSystem : MazePuzzleSystemBase
     }
 }
 
-public sealed class FloorChoicePuzzleSystem : MazePuzzleSystemBase
-{
+public sealed class FloorChoicePuzzleSystem : MazePuzzleSystemBase {
     public const string TypeId = "floor_choice";
     private FloorChoicePuzzleStateComponent state;
 
     public override string PuzzleType => TypeId;
 
     public FloorChoicePuzzleSystem(GameDatabase database, PlayerDatabase player, EventBus eventBus)
-        : base(database, player, eventBus)
-    {
+        : base(database, player, eventBus) {
     }
 
-    public CommandResult SelectTile(string puzzleId, string tileKey, MazeRunComponent run)
-    {
+    public CommandResult SelectTile(string puzzleId, string tileKey, MazeRunComponent run) {
         MazePuzzleData data = GetPuzzle(puzzleId);
         EnsurePuzzle(puzzleId);
         if (!ContainsOption(data, tileKey))
@@ -557,8 +493,7 @@ public sealed class FloorChoicePuzzleSystem : MazePuzzleSystemBase
         return CommandResult.Succeeded(state.feedback, vm);
     }
 
-    public override MazePuzzleEvaluation Evaluate(string puzzleId, MazeRunComponent run)
-    {
+    public override MazePuzzleEvaluation Evaluate(string puzzleId, MazeRunComponent run) {
         MazePuzzleData data = GetPuzzle(puzzleId);
         EnsurePuzzle(puzzleId);
         if (data == null)
@@ -570,8 +505,7 @@ public sealed class FloorChoicePuzzleSystem : MazePuzzleSystemBase
             : MazePuzzleEvaluation.Incorrect("The chosen tile flashes red.");
     }
 
-    public override MazePuzzleRoomViewModel GetViewModel(string puzzleId, MazeRunComponent run)
-    {
+    public override MazePuzzleRoomViewModel GetViewModel(string puzzleId, MazeRunComponent run) {
         MazePuzzleData data = GetPuzzle(puzzleId);
         EnsurePuzzle(puzzleId);
         MazePuzzleRoomViewModel vm = CreateBaseViewModel(data);
@@ -586,8 +520,7 @@ public sealed class FloorChoicePuzzleSystem : MazePuzzleSystemBase
         return vm;
     }
 
-    public override void ApplyResolution(string puzzleId, MazePuzzleEvaluation evaluation, MazeRunComponent run)
-    {
+    public override void ApplyResolution(string puzzleId, MazePuzzleEvaluation evaluation, MazeRunComponent run) {
         EnsurePuzzle(puzzleId);
         state.feedback = evaluation != null ? evaluation.message : string.Empty;
         if (evaluation != null && evaluation.status == MazePuzzleEvaluationStatus.Incorrect && !string.IsNullOrEmpty(state.selectedTileKey))
@@ -596,14 +529,12 @@ public sealed class FloorChoicePuzzleSystem : MazePuzzleSystemBase
         Publish(GetViewModel(puzzleId, run));
     }
 
-    protected override void CreateStateComponent()
-    {
+    protected override void CreateStateComponent() {
         state = new FloorChoicePuzzleStateComponent();
         world.AddComponent(stateEntity, state);
     }
 
-    protected override void ResetState()
-    {
+    protected override void ResetState() {
         if (state == null)
             return;
         state.puzzleId = string.Empty;
@@ -613,16 +544,14 @@ public sealed class FloorChoicePuzzleSystem : MazePuzzleSystemBase
         state.solved = false;
     }
 
-    private void EnsurePuzzle(string puzzleId)
-    {
+    private void EnsurePuzzle(string puzzleId) {
         if (state.puzzleId == puzzleId)
             return;
         ResetState();
         state.puzzleId = puzzleId;
     }
 
-    private CommandResult Fail(string message, string puzzleId, MazeRunComponent run)
-    {
+    private CommandResult Fail(string message, string puzzleId, MazeRunComponent run) {
         state.feedback = message;
         MazePuzzleRoomViewModel vm = GetViewModel(puzzleId, run);
         Publish(vm);
@@ -630,8 +559,7 @@ public sealed class FloorChoicePuzzleSystem : MazePuzzleSystemBase
     }
 }
 
-public sealed class RockWordPuzzleSystem : MazePuzzleSystemBase
-{
+public sealed class RockWordPuzzleSystem : MazePuzzleSystemBase {
     public const string TypeId = "block_words";
     private const int RequiredBlockCount = 3;
     private RockWordPuzzleStateComponent state;
@@ -639,20 +567,17 @@ public sealed class RockWordPuzzleSystem : MazePuzzleSystemBase
     public override string PuzzleType => TypeId;
 
     public RockWordPuzzleSystem(GameDatabase database, PlayerDatabase player, EventBus eventBus)
-        : base(database, player, eventBus)
-    {
+        : base(database, player, eventBus) {
     }
 
-    public CommandResult ActivateLight(string puzzleId, MazeRunComponent run)
-    {
+    public CommandResult ActivateLight(string puzzleId, MazeRunComponent run) {
         EnsurePuzzle(puzzleId);
         state.lightActivated = true;
         state.feedback = "The candle projects a beam across the seven words.";
         return Success(puzzleId, run);
     }
 
-    public CommandResult ToggleWord(string puzzleId, string wordKey, MazeRunComponent run)
-    {
+    public CommandResult ToggleWord(string puzzleId, string wordKey, MazeRunComponent run) {
         MazePuzzleData data = GetPuzzle(puzzleId);
         EnsurePuzzle(puzzleId);
         if (!state.lightActivated)
@@ -662,8 +587,7 @@ public sealed class RockWordPuzzleSystem : MazePuzzleSystemBase
 
         if (state.blockedWordKeys.Contains(wordKey))
             state.blockedWordKeys.Remove(wordKey);
-        else
-        {
+        else {
             if (state.blockedWordKeys.Count >= RequiredBlockCount)
                 return Fail("Only three words can be blocked.", puzzleId, run);
             state.blockedWordKeys.Add(wordKey);
@@ -673,8 +597,7 @@ public sealed class RockWordPuzzleSystem : MazePuzzleSystemBase
         return Success(puzzleId, run);
     }
 
-    public override MazePuzzleEvaluation Evaluate(string puzzleId, MazeRunComponent run)
-    {
+    public override MazePuzzleEvaluation Evaluate(string puzzleId, MazeRunComponent run) {
         MazePuzzleData data = GetPuzzle(puzzleId);
         EnsurePuzzle(puzzleId);
         if (data == null)
@@ -692,8 +615,7 @@ public sealed class RockWordPuzzleSystem : MazePuzzleSystemBase
             : MazePuzzleEvaluation.Incorrect("The blocked words do not reveal the answer.");
     }
 
-    public override MazePuzzleRoomViewModel GetViewModel(string puzzleId, MazeRunComponent run)
-    {
+    public override MazePuzzleRoomViewModel GetViewModel(string puzzleId, MazeRunComponent run) {
         MazePuzzleData data = GetPuzzle(puzzleId);
         EnsurePuzzle(puzzleId);
         MazePuzzleRoomViewModel vm = CreateBaseViewModel(data);
@@ -701,10 +623,8 @@ public sealed class RockWordPuzzleSystem : MazePuzzleSystemBase
         vm.isSolved = state.solved;
         vm.lightActivated = state.lightActivated;
         List<string> selected = new List<string>();
-        if (data?.optionKeys != null)
-        {
-            for (int i = 0; i < data.optionKeys.Count; i++)
-            {
+        if (data?.optionKeys != null) {
+            for (int i = 0; i < data.optionKeys.Count; i++) {
                 if (state.blockedWordKeys.Contains(data.optionKeys[i]))
                     selected.Add(data.optionKeys[i]);
             }
@@ -715,22 +635,19 @@ public sealed class RockWordPuzzleSystem : MazePuzzleSystemBase
         return vm;
     }
 
-    public override void ApplyResolution(string puzzleId, MazePuzzleEvaluation evaluation, MazeRunComponent run)
-    {
+    public override void ApplyResolution(string puzzleId, MazePuzzleEvaluation evaluation, MazeRunComponent run) {
         EnsurePuzzle(puzzleId);
         state.feedback = evaluation != null ? evaluation.message : string.Empty;
         state.solved = evaluation != null && evaluation.status == MazePuzzleEvaluationStatus.Correct;
         Publish(GetViewModel(puzzleId, run));
     }
 
-    protected override void CreateStateComponent()
-    {
+    protected override void CreateStateComponent() {
         state = new RockWordPuzzleStateComponent();
         world.AddComponent(stateEntity, state);
     }
 
-    protected override void ResetState()
-    {
+    protected override void ResetState() {
         if (state == null)
             return;
         state.puzzleId = string.Empty;
@@ -740,23 +657,20 @@ public sealed class RockWordPuzzleSystem : MazePuzzleSystemBase
         state.solved = false;
     }
 
-    private void EnsurePuzzle(string puzzleId)
-    {
+    private void EnsurePuzzle(string puzzleId) {
         if (state.puzzleId == puzzleId)
             return;
         ResetState();
         state.puzzleId = puzzleId;
     }
 
-    private CommandResult Success(string puzzleId, MazeRunComponent run)
-    {
+    private CommandResult Success(string puzzleId, MazeRunComponent run) {
         MazePuzzleRoomViewModel vm = GetViewModel(puzzleId, run);
         Publish(vm);
         return CommandResult.Succeeded(state.feedback, vm);
     }
 
-    private CommandResult Fail(string message, string puzzleId, MazeRunComponent run)
-    {
+    private CommandResult Fail(string message, string puzzleId, MazeRunComponent run) {
         state.feedback = message;
         MazePuzzleRoomViewModel vm = GetViewModel(puzzleId, run);
         Publish(vm);

@@ -2,65 +2,48 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public sealed class EventBus
-{
-    private readonly Dictionary<Type, List<Delegate>> handlers = new Dictionary<Type, List<Delegate>>();
+public sealed class EventBus {
+    // 存储：事件名 -> 委托列表（支持任意签名）
+    private readonly Dictionary<string, List<Delegate>> _handlers = new();
 
-    public void Subscribe<TEvent>(Action<TEvent> handler)
-    {
-        if (handler == null)
-            return;
-
-        Type eventType = typeof(TEvent);
-        if (!handlers.TryGetValue(eventType, out List<Delegate> eventHandlers))
-        {
-            eventHandlers = new List<Delegate>();
-            handlers[eventType] = eventHandlers;
+    // ---------- 订阅 ----------
+    public void Subscribe(string eventName, Delegate handler) {
+        if (!_handlers.TryGetValue(eventName, out var list)) {
+            list = new List<Delegate>();
+            _handlers[eventName] = list;
         }
-
-        if (!eventHandlers.Contains(handler))
-            eventHandlers.Add(handler);
+        // 不检查重复（如果需要，可自行添加）
+        if (!list.Contains(handler))
+            list.Add(handler);
     }
 
-    public void Unsubscribe<TEvent>(Action<TEvent> handler)
-    {
-        if (handler == null)
-            return;
-
-        Type eventType = typeof(TEvent);
-        if (!handlers.TryGetValue(eventType, out List<Delegate> eventHandlers))
-            return;
-
-        eventHandlers.Remove(handler);
-        if (eventHandlers.Count == 0)
-            handlers.Remove(eventType);
+    // ---------- 取消订阅 ----------
+    public void Unsubscribe(string eventName, Delegate handler) {
+        if (!_handlers.TryGetValue(eventName, out var list)) return;
+        list.Remove(handler);
+        if (list.Count == 0) _handlers.Remove(eventName);
     }
 
-    public void Publish<TEvent>(TEvent evt)
-    {
-        Type eventType = typeof(TEvent);
-        if (!handlers.TryGetValue(eventType, out List<Delegate> eventHandlers))
-            return;
+    // ---------- 发布 ----------
+    public void Publish(string eventName, object[] args) {
+        if (string.IsNullOrEmpty(eventName)) return;
+        if (!_handlers.TryGetValue(eventName, out var list)) return;
 
-        Delegate[] snapshot = eventHandlers.ToArray();
-        for (int i = 0; i < snapshot.Length; i++)
-        {
-            if (!(snapshot[i] is Action<TEvent> handler))
-                continue;
-
-            try
-            {
-                handler(evt);
+        var parameters = args ?? Array.Empty<object>(); // 防止 null
+        // 快照，防止遍历时修改
+        var snapshot = list.ToArray();
+        foreach (var handler in snapshot) {
+            try {
+                handler.DynamicInvoke(parameters);
             }
-            catch (Exception ex)
-            {
-                Debug.LogException(ex);
+            catch (Exception ex) {
+                Debug.LogError($"EventBus 发布 {eventName} 异常: {ex.Message}");
             }
         }
     }
 
-    public void Clear()
-    {
-        handlers.Clear();
+    // ---------- 清空 ----------
+    public void Clear() {
+        _handlers.Clear();
     }
 }

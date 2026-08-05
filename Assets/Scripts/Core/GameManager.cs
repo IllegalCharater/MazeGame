@@ -1,22 +1,21 @@
+using System.Threading;
+using Unity.VisualScripting;
 using UnityEngine;
 
-public sealed class GameManager : MonoBehaviour
-{
+public sealed class GameManager : MonoBehaviour {
     public static GameManager Instance { get; private set; }
     // public int Currency => currency;
-    public GameState CurrentState = GameState.MainMenu;
     public GameDatabase gameDatabase;
     public UIManager uiManager;
     public SceneFlowManager sceneFlowManager;
-    public FrameworkContext framework;
+    public GameContext gamecontext;
+    public GameTimer timer;
     public EcsWorld world;
-    
-    public GameServices Services { get; private set; }
 
-    private void Awake()
-    {
-        if (Instance != null && Instance != this)
-        {
+    public GameServices services { get; private set; }
+
+    private void Awake() {
+        if (Instance != null && Instance != this) {
             Destroy(gameObject);
             return;
         }
@@ -26,119 +25,119 @@ public sealed class GameManager : MonoBehaviour
         DontDestroyOnLoad(gameObject);
     }
 
-    private void InitializeGame()
-    {
+    private void InitializeGame() {
+        //初始化系统单例
         gameDatabase = GameDatabase.GetInstance();
         gameDatabase.Init();
 
-        framework = new FrameworkContext();
-        framework.Init();
+        gamecontext = new GameContext();
+        gamecontext.Init();
+
+        timer = new GameTimer();
+        timer.Init();
 
         world = new EcsWorld();
         world.Init();
 
-        Services = new GameServices();
-        Services.Initialize(gameDatabase, gameDatabase.GetPlayerData(), framework, world);
+        services = new GameServices();
+        services.Init();
 
-        uiManager=UIManager.GetInstance();
+        uiManager = UIManager.GetInstance();
         uiManager.Init();
-        sceneFlowManager=SceneFlowManager.GetInstance();
+
+        sceneFlowManager = SceneFlowManager.GetInstance();
         sceneFlowManager.Init();
-    }
+        //绑定全局事件
 
-    private void Update()
-    {
+    }
+    private void Update() {
         float deltaTime = Time.deltaTime;
-        framework?.Tick(deltaTime);
-        world?.Tick(deltaTime);
+        timer?.Tick(deltaTime);
     }
 
-    private void OnDestroy()
-    {
+    private void OnDestroy() {
         if (Instance != this)
             return;
 
+        gameDatabase?.Dispose();
+        gamecontext?.Dispose();
+        timer?.Dispose();
         world?.Dispose();
-        framework?.Dispose();
+        services?.Dispose();
+        uiManager?.Dispose();
+        sceneFlowManager?.Dispose();
         Instance = null;
     }
 
-    public void SetGameState(GameState next)
-    {
-        if (CurrentState == next)
-            return;
+    // public void SetGameState(GameState next) {
+    //     if (CurrentState == next)
+    //         return;
 
-        GameState prev = CurrentState;
-        CurrentState = next;
-        GameEvents.RaiseGameStateChanged(prev, next);
-    }
+    //     GameState prev = CurrentState;
+    //     CurrentState = next;
+    //     GameEvents.RaiseGameStateChanged(prev, next);
+    // }
 
-    public bool TryAddCurrency(string playerId,int amount)
-    {
-        if (amount < 0)
-            return false;
+    //     public bool TryAddCurrency(string playerId, int amount) {
+    //         if (amount < 0)
+    //             return false;
 
-        if (!TryGetProfile(playerId, out PlayerProfile profile))
-            return false;
+    //         if (!TryGetProfile(playerId, out PlayerProfile profile))
+    //             return false;
 
-        var currency=profile.currency;
-        long next = (long)currency + amount;
-        if (next > int.MaxValue)
-            return false;
+    //         var currency = profile.currency;
+    //         long next = (long)currency + amount;
+    //         if (next > int.MaxValue)
+    //             return false;
 
-        SetCurrency(playerId, (int)next);
-        return true;
-    }
+    //         SetCurrency(playerId, (int)next);
+    //         return true;
+    //     }
 
-    public bool TrySpendCurrency(string playerId,float amount)
-    {
-        if (!TryGetProfile(playerId, out PlayerProfile profile))
-            return false;
+    //     public bool TrySpendCurrency(string playerId, float amount) {
+    //         if (!TryGetProfile(playerId, out PlayerProfile profile))
+    //             return false;
 
-        var currency=profile.currency;
-        if (amount < 0 || currency < amount)
-            return false;
+    //         var currency = profile.currency;
+    //         if (amount < 0 || currency < amount)
+    //             return false;
 
-        SetCurrency(playerId, currency - amount);
-        return true;
-    }
+    //         SetCurrency(playerId, currency - amount);
+    //         return true;
+    //     }
 
-    public void SetCurrency(float value)
-    {
-        if (gameDatabase?.GetPlayerData() == null)
-            return;
+    //     public void SetCurrency(float value) {
+    //         if (gameDatabase?.GetPlayerData() == null)
+    //             return;
 
-        SetCurrency(gameDatabase.GetPlayerData().playerId, value);
-    }
+    //         SetCurrency(gameDatabase.GetPlayerData().playerId, value);
+    //     }
 
-    private void SetCurrency(string playerId, float value)
-    {
-        if (!TryGetProfile(playerId, out PlayerProfile profile))
-            return;
+    //     private void SetCurrency(string playerId, float value) {
+    //         if (!TryGetProfile(playerId, out PlayerProfile profile))
+    //             return;
 
-        int currency = Mathf.Max(0, Mathf.FloorToInt(value));
-        profile.currency = currency;
-        GameEvents.RaiseCurrencyChanged(currency);
-    }
+    //         int currency = Mathf.Max(0, Mathf.FloorToInt(value));
+    //         profile.currency = currency;
+    //         GameEvents.RaiseCurrencyChanged(currency);
+    //     }
 
-    private bool TryGetProfile(string playerId, out PlayerProfile profile)
-    {
-        profile = null;
-        if (gameDatabase == null || string.IsNullOrEmpty(playerId))
-            return false;
-        if (!gameDatabase.playerDatabases.TryGetValue(playerId, out PlayerDatabase player) || player == null)
-            return false;
+    //     private bool TryGetProfile(string playerId, out PlayerProfile profile) {
+    //         profile = null;
+    //         if (gameDatabase == null || string.IsNullOrEmpty(playerId))
+    //             return false;
+    //         if (!gameDatabase.playerDatabases.TryGetValue(playerId, out PlayerDatabase player) || player == null)
+    //             return false;
 
-        profile = player.profile;
-        return profile != null;
-    }
+    //         profile = player.profile;
+    //         return profile != null;
+    //     }
 
-#if UNITY_EDITOR
-    private void OnValidate()
-    {
-        // currency = Mathf.Max(0, currency);
-        // if (Application.isPlaying && Instance == this)
-        //     SetCurrency(currency);
-    }
-#endif
+    // #if UNITY_EDITOR
+    //     private void OnValidate() {
+    //         // currency = Mathf.Max(0, currency);
+    //         // if (Application.isPlaying && Instance == this)
+    //         //     SetCurrency(currency);
+    //     }
+    // #endif
 }

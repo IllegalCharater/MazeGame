@@ -1,0 +1,5 @@
+root = true
+
+[*.cs]
+# 核心配置：设置左大括号不换行
+csharp_new_line_before_open_brace = none

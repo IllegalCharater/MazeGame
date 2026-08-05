@@ -1,143 +1,21 @@
-﻿using System;
+using System;
+using System.Threading.Tasks;
 
-public sealed class AddCurrencyCommand : ICommand
-{
-    public string playerId;
-    public int amount;
+public sealed class ChangeCurrency : ICommand {
+    // payload：增加金币数量（amount）
+    public Task<CommandResult> Handle(DataBag payload = null) {
+        // string playerId = payload.Get("playerId", "");
+        int amount = payload.Get("amount", -1);
+        if (amount < 0)
+            return Task.FromResult(CommandResult.Failed("Currency changed failed"));
 
-    public AddCurrencyCommand(string playerId, int amount)
-    {
-        this.playerId = playerId;
-        this.amount = amount;
-    }
-}
+        //刷新数据
+        DataBag _profileData = new DataBag();
+        _profileData.Set("currency", amount);
+        GameDatabase.Instance.GetPlayerData().Profile.UpdateData(_profileData);
 
-public sealed class SpendCurrencyCommand : ICommand
-{
-    public string playerId;
-    public float amount;
-
-    public SpendCurrencyCommand(string playerId, float amount)
-    {
-        this.playerId = playerId;
-        this.amount = amount;
-    }
-}
-
-public sealed class AddCurrencyCommandHandler : ICommandHandler<AddCurrencyCommand>
-{
-    private readonly GameDatabase database;
-    private readonly PlayerDatabase fallbackPlayer;
-
-    public AddCurrencyCommandHandler(GameDatabase database, PlayerDatabase fallbackPlayer)
-    {
-        this.database = database;
-        this.fallbackPlayer = fallbackPlayer;
-    }
-
-    public CommandResult Handle(AddCurrencyCommand command)
-    {
-        if (command.amount < 0)
-            return CommandResult.Failed("Currency amount must be non-negative.");
-        if (!TryGetProfile(command.playerId, out PlayerProfile profile))
-            return CommandResult.Failed("Player profile not found.");
-
-        long next = (long)profile.currency + command.amount;
-        if (next > int.MaxValue)
-            return CommandResult.Failed("Currency exceeds int max value.");
-
-        profile.currency = (int)next;
-        GameEvents.RaiseCurrencyChanged(profile.currency);
-        return CommandResult.Succeeded("Currency added.", profile.currency);
-    }
-
-    private bool TryGetProfile(string playerId, out PlayerProfile profile)
-    {
-        profile = null;
-        PlayerDatabase player = ResolvePlayer(playerId);
-        if (player?.profile == null)
-            return false;
-
-        profile = player.profile;
-        return true;
-    }
-
-    private PlayerDatabase ResolvePlayer(string playerId)
-    {
-        if (!string.IsNullOrEmpty(playerId))
-        {
-            if (database != null && database.playerDatabases.TryGetValue(playerId, out PlayerDatabase player))
-                return player;
-            return null;
-        }
-
-        if (fallbackPlayer != null)
-            return fallbackPlayer;
-
-        if (database == null)
-            return null;
-
-        foreach (PlayerDatabase candidate in database.playerDatabases.Values)
-            return candidate;
-
-        return null;
-    }
-}
-
-public sealed class SpendCurrencyCommandHandler : ICommandHandler<SpendCurrencyCommand>
-{
-    private readonly GameDatabase database;
-    private readonly PlayerDatabase fallbackPlayer;
-
-    public SpendCurrencyCommandHandler(GameDatabase database, PlayerDatabase fallbackPlayer)
-    {
-        this.database = database;
-        this.fallbackPlayer = fallbackPlayer;
-    }
-
-    public CommandResult Handle(SpendCurrencyCommand command)
-    {
-        if (command.amount < 0f)
-            return CommandResult.Failed("Currency amount must be non-negative.");
-        if (!TryGetProfile(command.playerId, out PlayerProfile profile))
-            return CommandResult.Failed("Player profile not found.");
-        if (profile.currency < command.amount)
-            return CommandResult.Failed("Not enough currency.");
-
-        profile.currency = Math.Max(0, (int)Math.Floor(profile.currency - command.amount));
-        GameEvents.RaiseCurrencyChanged(profile.currency);
-        return CommandResult.Succeeded("Currency spent.", profile.currency);
-    }
-
-    private bool TryGetProfile(string playerId, out PlayerProfile profile)
-    {
-        profile = null;
-        PlayerDatabase player = ResolvePlayer(playerId);
-        if (player?.profile == null)
-            return false;
-
-        profile = player.profile;
-        return true;
-    }
-
-    private PlayerDatabase ResolvePlayer(string playerId)
-    {
-        if (!string.IsNullOrEmpty(playerId))
-        {
-            if (database != null && database.playerDatabases.TryGetValue(playerId, out PlayerDatabase player))
-                return player;
-            return null;
-        }
-
-        if (fallbackPlayer != null)
-            return fallbackPlayer;
-
-        if (database == null)
-            return null;
-
-        foreach (PlayerDatabase candidate in database.playerDatabases.Values)
-            return candidate;
-
-        return null;
+        //派发事件
+        GameContext.Instance.DispatchEvent("OnCurrencyChanged");
+        return Task.FromResult(CommandResult.Succeeded("Currency Changed.", amount));
     }
 }

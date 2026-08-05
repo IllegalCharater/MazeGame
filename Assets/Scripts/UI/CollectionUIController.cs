@@ -1,52 +1,44 @@
 using System.Text;
 using UnityEngine.UI;
 
-public sealed class CollectionUIController : BaseUIController
-{
+public sealed class CollectionUIController : BaseUIController {
     private Text collectionText;
     private CollectionCategory category = CollectionCategory.Food;
 
-    public override void BindUI()
-    {
+    public override void BindUI() {
         if (collectionText == null)
             collectionText = FindText("Collection Text");
     }
 
-    public override void EventMapper()
-    {
+    public override void EventMapper() {
         GameEvents.OnCollectionChanged += OnCollectionChanged;
     }
 
-    public override void OnOpen()
-    {
+    public override void OnOpen() {
         Refresh();
     }
 
-    public override void Dismiss()
-    {
+    public override void Dismiss() {
         GameEvents.OnCollectionChanged -= OnCollectionChanged;
         base.Dismiss();
     }
 
-    public void BindCollectionText(Text text)
-    {
+    public void BindCollectionText(Text text) {
         collectionText = text;
         Refresh();
     }
 
-    private void OnCollectionChanged(CollectionCategory changedCategory)
-    {
+    private void OnCollectionChanged(CollectionCategory changedCategory) {
         if (changedCategory == category)
             Refresh();
     }
 
-    public void Refresh()
-    {
-        if (collectionText == null || GameManager.Instance?.Services?.Collections == null)
+    public void Refresh() {
+        if (collectionText == null || GameManager.Instance?.services?.Collections == null)
             return;
 
         StringBuilder sb = new StringBuilder();
-        foreach (string id in GameManager.Instance.Services.Collections.GetUnlocked(category))
+        foreach (string id in GameManager.Instance.services.Collections.GetUnlocked(category))
             sb.AppendLine(id);
         collectionText.text = sb.ToString();
     }

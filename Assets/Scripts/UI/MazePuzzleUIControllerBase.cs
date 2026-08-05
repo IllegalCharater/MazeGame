@@ -3,8 +3,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
-public abstract class MazePuzzleUIControllerBase : BaseUIController
-{
+public abstract class MazePuzzleUIControllerBase : BaseUIController {
     public override string layerName => UIConfig.PopupLayerName;
     public override bool hasInputBlocker => true;
 
@@ -25,8 +24,7 @@ public abstract class MazePuzzleUIControllerBase : BaseUIController
     protected abstract string ExpectedPuzzleType { get; }
     protected abstract string DefaultTitle { get; }
 
-    public override void BindUI()
-    {
+    public override void BindUI() {
         titleText = FindText("TitleText");
         hintText = FindText("HintText");
         selectionText = FindText("SelectionText");
@@ -38,16 +36,14 @@ public abstract class MazePuzzleUIControllerBase : BaseUIController
         BindPuzzleUI();
     }
 
-    public override void EventMapper()
-    {
+    public override void EventMapper() {
         BindClickEvent(closeButton, Close);
         BindClickEvent(submitButton, Submit);
         MapPuzzleEvents();
     }
 
-    public override void OnOpen()
-    {
-        GameServices services = GameManager.Instance != null ? GameManager.Instance.Services : null;
+    public override void OnOpen() {
+        GameServices services = GameManager.Instance != null ? GameManager.Instance.services : null;
         maze = services?.Maze;
         commands = services?.Commands;
         events = services?.Events;
@@ -55,13 +51,11 @@ public abstract class MazePuzzleUIControllerBase : BaseUIController
         RefreshPuzzle();
     }
 
-    public override void OnRefresh()
-    {
+    public override void OnRefresh() {
         RefreshPuzzle();
     }
 
-    public override void Dismiss()
-    {
+    public override void Dismiss() {
         events?.Unsubscribe<MazePuzzleStateChangedEvent>(OnPuzzleStateChanged);
         base.Dismiss();
     }
@@ -70,21 +64,18 @@ public abstract class MazePuzzleUIControllerBase : BaseUIController
     protected abstract void MapPuzzleEvents();
     protected abstract void RenderPuzzle(MazePuzzleRoomViewModel vm);
 
-    protected void Execute(CommandResult result)
-    {
+    protected void Execute(CommandResult result) {
         if (result?.payload is MazePuzzleRoomViewModel puzzleViewModel)
             Render(puzzleViewModel);
         else
             RefreshPuzzle();
     }
 
-    protected string CurrentPuzzleId()
-    {
+    protected string CurrentPuzzleId() {
         return viewModel != null ? viewModel.puzzleId : string.Empty;
     }
 
-    protected static void SetOptionButton(Button button, Text label, MazePuzzleOptionViewModel option, bool solved)
-    {
+    protected static void SetOptionButton(Button button, Text label, MazePuzzleOptionViewModel option, bool solved) {
         if (button == null)
             return;
 
@@ -92,7 +83,7 @@ public abstract class MazePuzzleUIControllerBase : BaseUIController
         if (option == null)
             return;
 
-        UIHelper.SetText(label, option.label);
+        SetText(label, option.label);
         button.interactable = !solved && option.available;
         Image image = button.GetComponent<Image>();
         if (image == null)
@@ -107,24 +98,20 @@ public abstract class MazePuzzleUIControllerBase : BaseUIController
             image.color = new Color(0.32f, 0.38f, 0.46f, 1f);
     }
 
-    private void Submit()
-    {
+    private void Submit() {
         if (commands == null || viewModel == null)
             return;
         Execute(commands.Execute(new SubmitMazePuzzleCommand(viewModel.puzzleId)));
     }
 
-    private void Close()
-    {
+    private void Close() {
         UIManager.CloseView(viewName);
     }
 
-    private void RefreshPuzzle()
-    {
+    private void RefreshPuzzle() {
         MazePuzzleRoomViewModel current = maze != null ? maze.GetCurrentPuzzleViewModel() : null;
-        if (current == null || current.puzzleType != ExpectedPuzzleType)
-        {
-            UIHelper.SetText(feedbackText, "Current maze node does not contain this puzzle.");
+        if (current == null || current.puzzleType != ExpectedPuzzleType) {
+            SetText(feedbackText, "Current maze node does not contain this puzzle.");
             if (submitButton != null)
                 submitButton.interactable = false;
             return;
@@ -132,37 +119,33 @@ public abstract class MazePuzzleUIControllerBase : BaseUIController
         Render(current);
     }
 
-    private void Render(MazePuzzleRoomViewModel vm)
-    {
+    private void Render(MazePuzzleRoomViewModel vm) {
         if (vm == null || vm.puzzleType != ExpectedPuzzleType)
             return;
 
         viewModel = vm;
-        UIHelper.SetText(titleText, DefaultTitle);
-        UIHelper.SetText(hintText, vm.hintText);
-        UIHelper.SetText(selectionText, string.IsNullOrEmpty(vm.selectedInput) ? "Selection: none" : "Selection: " + vm.selectedInput);
-        UIHelper.SetText(feedbackText, vm.feedback);
-        UIHelper.SetText(rewardText, "Reward: " + FormatRewards(vm.successRewards) + "\nFragment: " + vm.fragmentText);
-        UIHelper.SetText(energyText, "Energy: " + vm.currentEnergy + "/" + vm.maxEnergy);
+        SetText(titleText, DefaultTitle);
+        SetText(hintText, vm.hintText);
+        SetText(selectionText, string.IsNullOrEmpty(vm.selectedInput) ? "Selection: none" : "Selection: " + vm.selectedInput);
+        SetText(feedbackText, vm.feedback);
+        SetText(rewardText, "Reward: " + FormatRewards(vm.successRewards) + "\nFragment: " + vm.fragmentText);
+        SetText(energyText, "Energy: " + vm.currentEnergy + "/" + vm.maxEnergy);
         if (submitButton != null)
             submitButton.interactable = vm.canSubmit && !vm.isSolved;
         RenderPuzzle(vm);
     }
 
-    private void OnPuzzleStateChanged(MazePuzzleStateChangedEvent evt)
-    {
+    private void OnPuzzleStateChanged(MazePuzzleStateChangedEvent evt) {
         if (evt.puzzleType == ExpectedPuzzleType)
             Render(evt.viewModel);
     }
 
-    private static string FormatRewards(Dictionary<string, int> rewards)
-    {
+    private static string FormatRewards(Dictionary<string, int> rewards) {
         if (rewards == null || rewards.Count == 0)
             return "none";
 
         StringBuilder builder = new StringBuilder();
-        foreach (KeyValuePair<string, int> reward in rewards)
-        {
+        foreach (KeyValuePair<string, int> reward in rewards) {
             if (builder.Length > 0)
                 builder.Append(", ");
             builder.Append(reward.Key);

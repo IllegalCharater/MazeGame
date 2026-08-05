@@ -1,8 +1,7 @@
-﻿public sealed class MazeService
-{
+﻿public sealed class MazeService {
     private GameDatabase database;
     private PlayerDatabase player;
-    private FrameworkContext framework;
+    private GameContext framework;
     private EcsWorld world;
     private MazeSystem mazeSystem;
     private ItemSocketPuzzleSystem itemSocketPuzzleSystem;
@@ -19,8 +18,7 @@
     public CommandBus Commands => framework != null ? framework.Commands : null;
     public EventBus Events => framework != null ? framework.Events : null;
 
-    public void Initialize(GameDatabase database, PlayerDatabase player, FrameworkContext framework, EcsWorld world)
-    {
+    public void Initialize(GameDatabase database, PlayerDatabase player, GameContext framework, EcsWorld world) {
         this.database = database;
         this.player = player;
         this.framework = framework;
@@ -46,21 +44,18 @@
         RegisterCommands();
     }
 
-    public MazeViewModel GetViewModel()
-    {
+    public MazeViewModel GetViewModel() {
         if (mazeSystem != null)
             return mazeSystem.GetViewModel();
 
-        return new MazeViewModel
-        {
+        return new MazeViewModel {
             hasRun = false,
             state = MazeRunState.NotStarted,
             message = "Maze service is not ready."
         };
     }
 
-    public CommandResult EnsureRunStarted(string ruleId = "default", string startNodeId = "node_01")
-    {
+    public CommandResult EnsureRunStarted(string ruleId = "default", string startNodeId = "node_01") {
         MazeViewModel vm = GetViewModel();
         if (vm.hasRun && !vm.isEnded)
             return CommandResult.Succeeded("Maze run already active.", vm);
@@ -68,8 +63,7 @@
         return StartRun(null, ruleId, startNodeId);
     }
 
-    public CommandResult StartRun(string playerId = null, string ruleId = "default", string startNodeId = "node_01")
-    {
+    public CommandResult StartRun(string playerId = null, string ruleId = "default", string startNodeId = "node_01") {
         if (!IsInitialized)
             return CommandResult.Failed("Maze service is not ready.", GetViewModel());
 
@@ -79,55 +73,46 @@
         return mazeSystem.StartRun(playerId, ruleId, startNodeId);
     }
 
-    public CommandResult MoveToNode(string nodeId)
-    {
+    public CommandResult MoveToNode(string nodeId) {
         return IsInitialized ? mazeSystem.MoveToNode(nodeId) : NotReady();
     }
 
-    public CommandResult MoveToNodeIndex(int index)
-    {
+    public CommandResult MoveToNodeIndex(int index) {
         if (!TryGetNodeIdByIndex(index, out string nodeId))
             return CommandResult.Failed("Maze node index not found: " + index, GetViewModel());
 
         return MoveToNode(nodeId);
     }
 
-    public CommandResult CollectNodeReward(string nodeId = null)
-    {
+    public CommandResult CollectNodeReward(string nodeId = null) {
         return IsInitialized ? mazeSystem.CollectNodeReward(nodeId) : NotReady();
     }
 
-    public CommandResult CollectCurrentNodeReward()
-    {
+    public CommandResult CollectCurrentNodeReward() {
         return CollectNodeReward(null);
     }
 
-    public CommandResult ActivateSwitch(string nodeId = null)
-    {
+    public CommandResult ActivateSwitch(string nodeId = null) {
         return IsInitialized ? mazeSystem.ActivateSwitch(nodeId) : NotReady();
     }
 
-    public CommandResult ActivateCurrentSwitch()
-    {
+    public CommandResult ActivateCurrentSwitch() {
         return ActivateSwitch(null);
     }
 
-    public MazePuzzleRoomViewModel GetCurrentPuzzleViewModel()
-    {
+    public MazePuzzleRoomViewModel GetCurrentPuzzleViewModel() {
         if (!TryGetPuzzleContext(null, null, out MazePuzzleData puzzle, out MazeRunComponent run, out IMazePuzzleSystem system, out _))
             return null;
 
         return system.GetViewModel(puzzle.puzzleId, run);
     }
 
-    public CommandResult SubmitPuzzle(string puzzleId)
-    {
+    public CommandResult SubmitPuzzle(string puzzleId) {
         if (!TryGetPuzzleContext(puzzleId, null, out MazePuzzleData puzzle, out MazeRunComponent run, out IMazePuzzleSystem system, out string reason))
             return PuzzleFailure(reason);
 
         MazePuzzleEvaluation evaluation = system.Evaluate(puzzle.puzzleId, run);
-        if (evaluation == null || evaluation.status == MazePuzzleEvaluationStatus.Invalid)
-        {
+        if (evaluation == null || evaluation.status == MazePuzzleEvaluationStatus.Invalid) {
             MazePuzzleEvaluation invalid = evaluation ?? MazePuzzleEvaluation.Invalid("Puzzle evaluation is invalid.");
             system.ApplyResolution(puzzle.puzzleId, invalid, run);
             return CommandResult.Failed(invalid.message, system.GetViewModel(puzzle.puzzleId, run));
@@ -141,66 +126,57 @@
             : CommandResult.Failed(resolution.message, viewModel);
     }
 
-    public CommandResult SelectItemSocketItem(string puzzleId, string itemKey)
-    {
+    public CommandResult SelectItemSocketItem(string puzzleId, string itemKey) {
         return SelectItemSocketItem(puzzleId, itemKey, -1);
     }
 
-    public CommandResult SelectItemSocketItem(string puzzleId, string itemKey, int slotIndex)
-    {
+    public CommandResult SelectItemSocketItem(string puzzleId, string itemKey, int slotIndex) {
         if (!TryGetPuzzleContext(puzzleId, ItemSocketPuzzleSystem.TypeId, out MazePuzzleData puzzle, out MazeRunComponent run, out _, out string reason))
             return PuzzleFailure(reason);
 
         return itemSocketPuzzleSystem.SelectItem(puzzle.puzzleId, itemKey, slotIndex, run);
     }
 
-    public CommandResult RemoveItemSocketItem(string puzzleId)
-    {
+    public CommandResult RemoveItemSocketItem(string puzzleId) {
         return RemoveItemSocketItem(puzzleId, -1);
     }
 
-    public CommandResult RemoveItemSocketItem(string puzzleId, int slotIndex)
-    {
+    public CommandResult RemoveItemSocketItem(string puzzleId, int slotIndex) {
         if (!TryGetPuzzleContext(puzzleId, ItemSocketPuzzleSystem.TypeId, out MazePuzzleData puzzle, out MazeRunComponent run, out _, out string reason))
             return PuzzleFailure(reason);
 
         return itemSocketPuzzleSystem.RemoveItem(puzzle.puzzleId, slotIndex, run);
     }
 
-    public CommandResult TogglePuzzleCandle(string puzzleId, int candleIndex)
-    {
+    public CommandResult TogglePuzzleCandle(string puzzleId, int candleIndex) {
         if (!TryGetPuzzleContext(puzzleId, CandleNumberPuzzleSystem.TypeId, out MazePuzzleData puzzle, out MazeRunComponent run, out _, out string reason))
             return PuzzleFailure(reason);
 
         return candleNumberPuzzleSystem.ToggleCandle(puzzle.puzzleId, candleIndex, run);
     }
 
-    public CommandResult OpenPuzzlePool(string puzzleId)
-    {
+    public CommandResult OpenPuzzlePool(string puzzleId) {
         if (!TryGetPuzzleContext(puzzleId, CandleNumberPuzzleSystem.TypeId, out MazePuzzleData puzzle, out MazeRunComponent run, out _, out string reason))
             return PuzzleFailure(reason);
 
         return candleNumberPuzzleSystem.OpenPool(puzzle.puzzleId, run);
     }
 
-    public CommandResult SelectPuzzleNumber(string puzzleId, string number)
-    {
+    public CommandResult SelectPuzzleNumber(string puzzleId, string number) {
         if (!TryGetPuzzleContext(puzzleId, CandleNumberPuzzleSystem.TypeId, out MazePuzzleData puzzle, out MazeRunComponent run, out _, out string reason))
             return PuzzleFailure(reason);
 
         return candleNumberPuzzleSystem.SelectNumber(puzzle.puzzleId, number, run);
     }
 
-    public CommandResult ClearPuzzleNumber(string puzzleId)
-    {
+    public CommandResult ClearPuzzleNumber(string puzzleId) {
         if (!TryGetPuzzleContext(puzzleId, CandleNumberPuzzleSystem.TypeId, out MazePuzzleData puzzle, out MazeRunComponent run, out _, out string reason))
             return PuzzleFailure(reason);
 
         return candleNumberPuzzleSystem.ClearNumber(puzzle.puzzleId, run);
     }
 
-    public CommandResult ChoosePuzzleFloor(string puzzleId, string tileKey)
-    {
+    public CommandResult ChoosePuzzleFloor(string puzzleId, string tileKey) {
         if (!TryGetPuzzleContext(puzzleId, FloorChoicePuzzleSystem.TypeId, out MazePuzzleData puzzle, out MazeRunComponent run, out _, out string reason))
             return PuzzleFailure(reason);
 
@@ -208,66 +184,54 @@
         return selection.success ? SubmitPuzzle(puzzle.puzzleId) : selection;
     }
 
-    public CommandResult ActivateRockWordLight(string puzzleId)
-    {
+    public CommandResult ActivateRockWordLight(string puzzleId) {
         if (!TryGetPuzzleContext(puzzleId, RockWordPuzzleSystem.TypeId, out MazePuzzleData puzzle, out MazeRunComponent run, out _, out string reason))
             return PuzzleFailure(reason);
 
         return rockWordPuzzleSystem.ActivateLight(puzzle.puzzleId, run);
     }
 
-    public CommandResult ToggleRockWordBlock(string puzzleId, string wordKey)
-    {
+    public CommandResult ToggleRockWordBlock(string puzzleId, string wordKey) {
         if (!TryGetPuzzleContext(puzzleId, RockWordPuzzleSystem.TypeId, out MazePuzzleData puzzle, out MazeRunComponent run, out _, out string reason))
             return PuzzleFailure(reason);
 
         return rockWordPuzzleSystem.ToggleWord(puzzle.puzzleId, wordKey, run);
     }
 
-    public CommandResult UseFood(string foodId)
-    {
+    public CommandResult UseFood(string foodId) {
         return IsInitialized ? mazeSystem.UseFood(foodId) : NotReady();
     }
 
-    public CommandResult StartTrap(string trapId = null)
-    {
+    public CommandResult StartTrap(string trapId = null) {
         return IsInitialized ? mazeSystem.StartTrap(trapId) : NotReady();
     }
 
-    public CommandResult ResolveTrap(string trapId, bool succeeded)
-    {
+    public CommandResult ResolveTrap(string trapId, bool succeeded) {
         return IsInitialized ? mazeSystem.ResolveTrap(trapId, succeeded) : NotReady();
     }
 
-    public CommandResult OpenExitPuzzle()
-    {
+    public CommandResult OpenExitPuzzle() {
         return IsInitialized ? mazeSystem.OpenExitPuzzle() : NotReady();
     }
 
-    public CommandResult AssembleExitPuzzle()
-    {
+    public CommandResult AssembleExitPuzzle() {
         return IsInitialized ? mazeSystem.AssembleExitPuzzle() : NotReady();
     }
 
-    public CommandResult LeaveWithoutPerfect()
-    {
+    public CommandResult LeaveWithoutPerfect() {
         return IsInitialized ? mazeSystem.LeaveWithoutPerfect() : NotReady();
     }
 
-    public CommandResult EvacuateRun()
-    {
+    public CommandResult EvacuateRun() {
         return IsInitialized ? mazeSystem.EvacuateRun() : NotReady();
     }
 
-    public CommandResult FinishRun()
-    {
+    public CommandResult FinishRun() {
         return IsInitialized ? mazeSystem.FinishRun() : NotReady();
     }
 
-    public bool CanMoveToNode(string nodeId, out string reason)
-    {
-        if (!IsInitialized)
-        {
+    public bool CanMoveToNode(string nodeId, out string reason) {
+        if (!IsInitialized) {
             reason = "Maze service is not ready.";
             return false;
         }
@@ -275,8 +239,7 @@
         return mazeSystem.CanMoveToNode(nodeId, out reason);
     }
 
-    public bool TryGetNodeIdByIndex(int index, out string nodeId)
-    {
+    public bool TryGetNodeIdByIndex(int index, out string nodeId) {
         if (IsInitialized)
             return mazeSystem.TryGetNodeIdByIndex(index, out nodeId);
 
@@ -284,13 +247,11 @@
         return false;
     }
 
-    private CommandResult NotReady()
-    {
+    private CommandResult NotReady() {
         return CommandResult.Failed("Maze service is not ready.", GetViewModel());
     }
 
-    private void RegisterCommands()
-    {
+    private void RegisterCommands() {
         CommandBus commands = Commands;
         if (commands == null)
             return;
@@ -325,34 +286,29 @@
         out MazePuzzleData puzzle,
         out MazeRunComponent run,
         out IMazePuzzleSystem system,
-        out string reason)
-    {
+        out string reason) {
         puzzle = null;
         run = null;
         system = null;
         reason = string.Empty;
-        if (!IsInitialized)
-        {
+        if (!IsInitialized) {
             reason = "Maze service is not ready.";
             return false;
         }
         if (!mazeSystem.TryGetActivePuzzle(puzzleId, out puzzle, out run, out reason))
             return false;
-        if (!string.IsNullOrEmpty(requiredType) && puzzle.puzzleType != requiredType)
-        {
+        if (!string.IsNullOrEmpty(requiredType) && puzzle.puzzleType != requiredType) {
             reason = "Puzzle action does not match the current puzzle type.";
             return false;
         }
-        if (!puzzleSystems.TryGetValue(puzzle.puzzleType, out system) || system == null)
-        {
+        if (!puzzleSystems.TryGetValue(puzzle.puzzleType, out system) || system == null) {
             reason = "Puzzle system is not registered: " + puzzle.puzzleType;
             return false;
         }
         return true;
     }
 
-    private CommandResult PuzzleFailure(string message)
-    {
+    private CommandResult PuzzleFailure(string message) {
         return CommandResult.Failed(message, GetCurrentPuzzleViewModel());
     }
 }

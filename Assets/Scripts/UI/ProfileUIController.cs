@@ -1,23 +1,19 @@
 using UnityEngine.UI;
 
-public sealed class ProfileUIController : BaseUIController
-{
+public sealed class ProfileUIController : BaseUIController {
     private Text profileText;
 
-    public override void BindUI()
-    {
+    public override void BindUI() {
         if (profileText == null)
             profileText = FindText("Profile Text");
     }
 
-    public override void OnOpen()
-    {
+    public override void OnOpen() {
         Refresh();
     }
 
-    public void Refresh()
-    {
-        PlayerProfile profile = GameDatabase.Instance?.GetPlayerData()?.profile;
+    public void Refresh() {
+        PlayerProfile profile = GameDatabase.Instance?.GetPlayerData()?.Profile;
         if (profileText == null || profile == null)
             return;
 

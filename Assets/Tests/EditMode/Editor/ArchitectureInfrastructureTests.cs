@@ -6,75 +6,60 @@ using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
 
-public sealed class ArchitectureInfrastructureTests
-{
-    private sealed class TestCommand : ICommand
-    {
+public sealed class ArchitectureInfrastructureTests {
+    private sealed class TestCommand : ICommand {
         public int value;
     }
 
-    private sealed class AsyncTestCommand : ICommand
-    {
+    private sealed class AsyncTestCommand : ICommand {
         public int value;
     }
 
-    private sealed class TestCommandHandler : ICommandHandler<TestCommand>
-    {
-        public CommandResult Handle(TestCommand command)
-        {
+    private sealed class TestCommandHandler : ICommandHandler<TestCommand> {
+        public CommandResult Handle(TestCommand command) {
             return CommandResult.Succeeded("handled", command.value + 1);
         }
     }
 
-    private sealed class AsyncTestCommandHandler : IAsyncCommandHandler<AsyncTestCommand>
-    {
-        public Task<CommandResult> HandleAsync(AsyncTestCommand command)
-        {
+    private sealed class AsyncTestCommandHandler : IAsyncCommandHandler<AsyncTestCommand> {
+        public Task<CommandResult> HandleAsync(AsyncTestCommand command) {
             return Task.FromResult(CommandResult.Succeeded("async handled", command.value + 2));
         }
     }
 
-    private sealed class TestComponent : IComponent
-    {
+    private sealed class TestComponent : IComponent {
         public int value;
     }
 
-    private sealed class SecondTestComponent : IComponent
-    {
+    private sealed class SecondTestComponent : IComponent {
     }
 
-    private sealed class TestSystem : ISystem
-    {
+    private sealed class TestSystem : ISystem {
         public int initialized;
         public int ticks;
         public int disposed;
 
-        public void Initialize(EcsWorld world)
-        {
+        public void Initialize(EcsWorld world) {
             initialized++;
         }
 
-        public void Tick(float deltaTime)
-        {
+        public void Tick(float deltaTime) {
             ticks++;
         }
 
-        public void Dispose()
-        {
+        public void Dispose() {
             disposed++;
         }
     }
 
     [TearDown]
-    public void TearDown()
-    {
-        if (FrameworkContext.Instance != null)
-            FrameworkContext.Instance.Dispose();
+    public void TearDown() {
+        if (GameContext.Instance != null)
+            GameContext.Instance.Dispose();
     }
 
     [Test]
-    public void CommandBusExecutesRegisteredHandler()
-    {
+    public void CommandBusExecutesRegisteredHandler() {
         CommandBus bus = new CommandBus();
         bus.Register(new TestCommandHandler());
 
@@ -85,8 +70,7 @@ public sealed class ArchitectureInfrastructureTests
     }
 
     [Test]
-    public void CommandBusExecutesAsyncHandlerAndRejectsSyncExecution()
-    {
+    public void CommandBusExecutesAsyncHandlerAndRejectsSyncExecution() {
         CommandBus bus = new CommandBus();
         bus.Register(new AsyncTestCommandHandler());
 
@@ -100,8 +84,7 @@ public sealed class ArchitectureInfrastructureTests
     }
 
     [Test]
-    public void CommandBusFailsWhenHandlerIsMissing()
-    {
+    public void CommandBusFailsWhenHandlerIsMissing() {
         CommandBus bus = new CommandBus();
 
         CommandResult result = bus.Execute(new TestCommand());
@@ -111,8 +94,7 @@ public sealed class ArchitectureInfrastructureTests
     }
 
     [Test]
-    public void EventBusPublishesAndUnsubscribesSafely()
-    {
+    public void EventBusPublishesAndUnsubscribesSafely() {
         EventBus bus = new EventBus();
         int count = 0;
         Action<CurrencyChangedEvent> handler = evt => count++;
@@ -127,8 +109,7 @@ public sealed class ArchitectureInfrastructureTests
     }
 
     [Test]
-    public void EventBusListenerExceptionDoesNotBlockLaterListeners()
-    {
+    public void EventBusListenerExceptionDoesNotBlockLaterListeners() {
         EventBus bus = new EventBus();
         int count = 0;
 
@@ -142,8 +123,7 @@ public sealed class ArchitectureInfrastructureTests
     }
 
     [Test]
-    public void EcsWorldManagesEntityComponentsAndQueries()
-    {
+    public void EcsWorldManagesEntityComponentsAndQueries() {
         EcsWorld world = new EcsWorld();
         world.Init();
         EntityId entity = world.CreateEntity("Player");
@@ -163,8 +143,7 @@ public sealed class ArchitectureInfrastructureTests
     }
 
     [Test]
-    public void EcsWorldInitializesSystemsBeforeAndAfterInit()
-    {
+    public void EcsWorldInitializesSystemsBeforeAndAfterInit() {
         EcsWorld world = new EcsWorld();
         TestSystem beforeInit = new TestSystem();
         TestSystem afterInit = new TestSystem();
@@ -186,14 +165,12 @@ public sealed class ArchitectureInfrastructureTests
     }
 
     [Test]
-    public void GameTimerAllowsCallbacksToCancelAndScheduleTimersDuringTick()
-    {
+    public void GameTimerAllowsCallbacksToCancelAndScheduleTimersDuringTick() {
         GameTimer timer = new GameTimer();
         int fired = 0;
         int canceledTimerId = 0;
 
-        timer.Schedule(0.1f, () =>
-        {
+        timer.Schedule(0.1f, () => {
             fired += 1;
             timer.Cancel(canceledTimerId);
             timer.Schedule(0.1f, () => fired += 10);
@@ -208,9 +185,8 @@ public sealed class ArchitectureInfrastructureTests
     }
 
     [Test]
-    public void GameServicesInitializeRegistersServicesAndCommands()
-    {
-        FrameworkContext framework = new FrameworkContext();
+    public void GameServicesInitializeRegistersServicesAndCommands() {
+        GameContext framework = new GameContext();
         framework.Init();
         EcsWorld world = new EcsWorld();
         world.Init();
@@ -239,9 +215,8 @@ public sealed class ArchitectureInfrastructureTests
     }
 
     [Test]
-    public void CurrencyCommandsModifyPlayerAndPublishEvents()
-    {
-        FrameworkContext framework = new FrameworkContext();
+    public void CurrencyCommandsModifyPlayerAndPublishEvents() {
+        GameContext framework = new GameContext();
         framework.Init();
         EcsWorld world = new EcsWorld();
         world.Init();
@@ -250,8 +225,7 @@ public sealed class ArchitectureInfrastructureTests
         GameServices services = new GameServices();
         int eventCount = 0;
         float latestCurrency = 0;
-        framework.Events.Subscribe<CurrencyChangedEvent>(evt =>
-        {
+        framework.Events.Subscribe<CurrencyChangedEvent>(evt => {
             eventCount++;
             latestCurrency = evt.newAmount;
         });
@@ -262,30 +236,28 @@ public sealed class ArchitectureInfrastructureTests
 
         Assert.IsTrue(addResult.success);
         Assert.IsTrue(spendResult.success);
-        Assert.AreEqual(10, player.profile.currency);
+        Assert.AreEqual(10, player.Profile.currency);
         Assert.AreEqual(2, eventCount);
         Assert.AreEqual(10, latestCurrency);
     }
 
-    private static GameDatabase CreateDatabase(PlayerDatabase player)
-    {
+    private static GameDatabase CreateDatabase(PlayerDatabase player) {
         GameDatabase database = new GameDatabase();
         database.playerDatabases[player.playerId] = player;
         return database;
     }
 
-    private static PlayerDatabase CreatePlayer(string playerId, int currency)
-    {
+    private static PlayerDatabase CreatePlayer(string playerId, int currency) {
         PlayerDatabase player = new PlayerDatabase();
         player.playerId = playerId;
-        player.profile = new PlayerProfile();
-        player.profile.init(playerId);
-        player.profile.currency = currency;
-        player.inventory = new PlayerInventory();
-        player.inventory.playerId = playerId;
-        player.collections = new PlayerCollections();
-        player.blueprints = new HashSet<string>();
-        player.activeBuffs = new List<ActiveBuff>();
+        player.Profile = new PlayerProfile();
+        player.Profile.init(playerId);
+        player.Profile.currency = currency;
+        player.Inventory = new PlayerInventory();
+        player.Inventory.playerId = playerId;
+        player.Collections = new PlayerCollections();
+        player.Blueprints = new HashSet<string>();
+        player.ActiveBuffs = new List<ActiveBuff>();
         return player;
     }
 }

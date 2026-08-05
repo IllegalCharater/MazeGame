@@ -2,8 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.UI;
 
-public sealed class ProfileDetailUIController : BaseUIController
-{
+public sealed class ProfileDetailUIController : BaseUIController {
     public override string layerName => UIConfig.PopupLayerName;
 
     private readonly string defaultJoinDate = "2026/04/21";
@@ -21,13 +20,11 @@ public sealed class ProfileDetailUIController : BaseUIController
     private Text[] recentTags;
     private Button closeButton;
 
-    public override void BindUI()
-    {
+    public override void BindUI() {
         CacheReferences();
     }
 
-    public override void EventMapper()
-    {
+    public override void EventMapper() {
         GameEvents.OnCollectionChanged += OnCollectionChanged;
         GameEvents.OnInventoryChanged += RefreshRecentItems;
         GameEvents.OnCurrencyChanged += OnCurrencyChanged;
@@ -35,13 +32,11 @@ public sealed class ProfileDetailUIController : BaseUIController
         BindClickEvent(closeButton, Close);
     }
 
-    public override void OnOpen()
-    {
+    public override void OnOpen() {
         RefreshAll();
     }
 
-    public override void Dismiss()
-    {
+    public override void Dismiss() {
         GameEvents.OnCollectionChanged -= OnCollectionChanged;
         GameEvents.OnInventoryChanged -= RefreshRecentItems;
         GameEvents.OnCurrencyChanged -= OnCurrencyChanged;
@@ -49,15 +44,13 @@ public sealed class ProfileDetailUIController : BaseUIController
         base.Dismiss();
     }
 
-    public void RefreshAll()
-    {
+    public void RefreshAll() {
         RefreshProfile();
         RefreshCollectionProgress();
         RefreshRecentItems();
     }
 
-    private void CacheReferences()
-    {
+    private void CacheReferences() {
         detailNameText = FindText("Detail Name");
         uidText = FindText("UID");
         detailLevelText = FindText("Detail Level");
@@ -77,8 +70,7 @@ public sealed class ProfileDetailUIController : BaseUIController
         };
 
         List<Text> tags = new List<Text>();
-        for (int i = 0; i < 8; i++)
-        {
+        for (int i = 0; i < 8; i++) {
             Text tag = FindText("New Tag " + i);
             if (tag != null)
                 tags.Add(tag);
@@ -86,10 +78,9 @@ public sealed class ProfileDetailUIController : BaseUIController
         recentTags = tags.ToArray();
     }
 
-    private void RefreshProfile()
-    {
+    private void RefreshProfile() {
         PlayerDatabase player = GameDatabase.Instance?.GetPlayerData();
-        PlayerProfile profile = player?.profile;
+        PlayerProfile profile = player?.Profile;
         if (profile == null)
             return;
 
@@ -110,8 +101,7 @@ public sealed class ProfileDetailUIController : BaseUIController
         UIHelper.SetText(totalProfitText, gold);
     }
 
-    private void RefreshCollectionProgress()
-    {
+    private void RefreshCollectionProgress() {
         PlayerDatabase player = GameDatabase.Instance?.GetPlayerData();
         if (player == null || collectTexts == null)
             return;
@@ -119,11 +109,10 @@ public sealed class ProfileDetailUIController : BaseUIController
         SetTextSafe(0, $"Food Collection\n{CountCollection(player, CollectionCategory.Food)}/{CountTable<FoodData>("foods")}");
         SetTextSafe(1, $"Outfit Collection\n{CountCollection(player, CollectionCategory.Outfit)}/{CountTable<OutfitData>("outfits")}");
         SetTextSafe(2, $"Furniture Collection\n{CountCollection(player, CollectionCategory.Furniture)}/{CountTable<FurnitureData>("furniture")}");
-        SetTextSafe(3, $"Blueprint Collection\n{(player.blueprints != null ? player.blueprints.Count : 0)}/{CountTable<BlueprintData>("blueprints")}");
+        SetTextSafe(3, $"Blueprint Collection\n{(player.Blueprints != null ? player.Blueprints.Count : 0)}/{CountTable<BlueprintData>("blueprints")}");
     }
 
-    private void RefreshRecentItems()
-    {
+    private void RefreshRecentItems() {
         if (recentTags == null || recentTags.Length == 0)
             return;
 
@@ -132,14 +121,11 @@ public sealed class ProfileDetailUIController : BaseUIController
             recentTags[i].text = i < recent.Count ? recent[i] : "NEW";
     }
 
-    private List<string> BuildRecentLabels()
-    {
+    private List<string> BuildRecentLabels() {
         List<string> labels = new List<string>();
         PlayerDatabase player = GameDatabase.Instance?.GetPlayerData();
-        if (player?.inventory != null)
-        {
-            foreach (KeyValuePair<string, int> kv in player.inventory.GetSnapshot())
-            {
+        if (player?.Inventory != null) {
+            foreach (KeyValuePair<string, int> kv in player.Inventory.GetSnapshot()) {
                 labels.Add(ResolveDisplayName(kv.Key));
                 if (labels.Count >= recentTags.Length)
                     return labels;
@@ -155,22 +141,19 @@ public sealed class ProfileDetailUIController : BaseUIController
         return labels;
     }
 
-    private void AddUnlockedLabels(List<string> labels, CollectionCategory category)
-    {
+    private void AddUnlockedLabels(List<string> labels, CollectionCategory category) {
         PlayerDatabase player = GameDatabase.Instance?.GetPlayerData();
-        if (player?.collections == null || labels.Count >= recentTags.Length)
+        if (player?.Collections == null || labels.Count >= recentTags.Length)
             return;
 
-        foreach (string id in player.collections.GetUnlocked(category))
-        {
+        foreach (string id in player.Collections.GetUnlocked(category)) {
             labels.Add(ResolveDisplayName(id));
             if (labels.Count >= recentTags.Length)
                 return;
         }
     }
 
-    private string ResolveDisplayName(string id)
-    {
+    private string ResolveDisplayName(string id) {
         GameDatabase database = GameDatabase.Instance;
         if (database == null || string.IsNullOrEmpty(id))
             return "NEW";
@@ -198,42 +181,35 @@ public sealed class ProfileDetailUIController : BaseUIController
         return id;
     }
 
-    private int CountTable<T>(string rootKey) where T : BaseData
-    {
+    private int CountTable<T>(string rootKey) where T : BaseData {
         IReadOnlyList<T> all = GameDatabase.Instance?.GetAll<T>(rootKey);
         return all != null ? all.Count : 0;
     }
 
-    private int CountCollection(PlayerDatabase player, CollectionCategory category)
-    {
-        IReadOnlyCollection<string> unlocked = player.collections?.GetUnlocked(category);
+    private int CountCollection(PlayerDatabase player, CollectionCategory category) {
+        IReadOnlyCollection<string> unlocked = player.Collections?.GetUnlocked(category);
         return unlocked != null ? unlocked.Count : 0;
     }
 
-    private void SetTextSafe(int index, string value)
-    {
+    private void SetTextSafe(int index, string value) {
         if (index >= 0 && index < collectTexts.Length)
             UIHelper.SetText(collectTexts[index], value);
     }
 
-    private void OnCollectionChanged(CollectionCategory category)
-    {
+    private void OnCollectionChanged(CollectionCategory category) {
         RefreshCollectionProgress();
         RefreshRecentItems();
     }
 
-    private void OnCurrencyChanged(float value)
-    {
+    private void OnCurrencyChanged(float value) {
         RefreshProfile();
     }
 
-    private void OnEnergyChanged(int current, int max)
-    {
+    private void OnEnergyChanged(int current, int max) {
         RefreshProfile();
     }
 
-    private void Close()
-    {
+    private void Close() {
         UIManager.CloseView(viewName);
     }
 }

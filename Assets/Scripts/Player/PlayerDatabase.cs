@@ -1,45 +1,39 @@
 using System.Collections.Generic;
 using UnityEngine;
 
-public class PlayerDatabase
-{
-    
-    public PlayerInventory inventory;
-    public PlayerProfile profile;
-    public PlayerCollections collections;
-    public HashSet<string> blueprints;
-    public List<ActiveBuff> activeBuffs;
+public class PlayerDatabase {
+    public PlayerInventory Inventory;
+    public PlayerProfile Profile;
+    public PlayerCollections Collections;
+    public HashSet<string> Blueprints;
+    public List<ActiveBuff> ActiveBuffs;
 
-    public string playerId ="unknown";
+    public string playerId = "unknown";
 
-    public void init(string playerId)
-    {
-        this.playerId=playerId;
+    public void init(string playerId) {
+        this.playerId = playerId;
 
         PlayerStartData startData = GameDatabase.Instance.Get<PlayerStartData>("player_start", this.playerId);
 
-        inventory = new PlayerInventory();
-        if (startData != null)
-        {
-            inventory.playerId = this.playerId;
-            inventory.ReplaceFrom(startData);
-        }
-        else
-        {
-            inventory.init(this.playerId);
-        }
+        Inventory = new PlayerInventory();
+        Inventory.Init(this.playerId);
 
-        profile = new PlayerProfile();
-        if (startData != null)
-            profile.ReplaceFrom(startData);
-        else
-            profile.init(this.playerId);
+        Profile = new PlayerProfile();
+        Profile.Init(this.playerId);
 
-        collections = new PlayerCollections();
-        blueprints = new HashSet<string>();
-        activeBuffs = new List<ActiveBuff>();
+        Collections = new PlayerCollections();
+        Blueprints = new HashSet<string>();
+        ActiveBuffs = new List<ActiveBuff>();
     }
 
-    
-    
+    //从外部更新数据
+    public void UpdataData(DataBag newData) {
+        PlayerInventory _inventory = newData.Get("Inventory", Inventory);
+        PlayerProfile _profile = newData.Get("Profile", Profile);
+        PlayerCollections _collections = newData.Get("Collections", Collections);
+        Inventory.UpdateData(new DataBag().FromObject(_inventory));
+        Profile.UpdateData(new DataBag().FromObject(_profile));
+        Collections.UpdateData(new DataBag().FromObject(_collections));
+    }
+
 }

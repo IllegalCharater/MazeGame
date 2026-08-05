@@ -1,10 +1,8 @@
 ﻿using System.Collections.Generic;
 using NUnit.Framework;
 
-public sealed class MazeVerticalSliceTests
-{
-    private sealed class MazeFixture
-    {
+public sealed class MazeVerticalSliceTests {
+    private sealed class MazeFixture {
         public GameDatabase database;
         public PlayerDatabase player;
         public EventBus events;
@@ -12,61 +10,51 @@ public sealed class MazeVerticalSliceTests
         public MazeSystem system;
     }
 
-    private sealed class FakeMazeView : IMazeView
-    {
+    private sealed class FakeMazeView : IMazeView {
         public MazeViewModel lastViewModel;
         public MazeRunResult lastResult;
         public string lastMessage;
         public int renderCount;
         public int actionCount;
 
-        public void Render(MazeViewModel viewModel)
-        {
+        public void Render(MazeViewModel viewModel) {
             lastViewModel = viewModel;
             renderCount++;
         }
 
-        public void ShowNodeActions(MazeViewModel viewModel)
-        {
+        public void ShowNodeActions(MazeViewModel viewModel) {
             lastViewModel = viewModel;
             actionCount++;
         }
 
-        public void HideNodeActions()
-        {
+        public void HideNodeActions() {
         }
 
-        public void ShowMessage(string message)
-        {
+        public void ShowMessage(string message) {
             lastMessage = message;
         }
 
-        public void ShowResult(MazeRunResult result)
-        {
+        public void ShowResult(MazeRunResult result) {
             lastResult = result;
         }
     }
 
-    private sealed class RecordingMoveHandler : ICommandHandler<MoveToMazeNodeCommand>
-    {
+    private sealed class RecordingMoveHandler : ICommandHandler<MoveToMazeNodeCommand> {
         public string nodeId;
         public int count;
 
-        public CommandResult Handle(MoveToMazeNodeCommand command)
-        {
+        public CommandResult Handle(MoveToMazeNodeCommand command) {
             nodeId = command.nodeId;
             count++;
             return CommandResult.Succeeded("recorded");
         }
     }
 
-    private sealed class RecordingCollectHandler : ICommandHandler<CollectMazeNodeRewardCommand>
-    {
+    private sealed class RecordingCollectHandler : ICommandHandler<CollectMazeNodeRewardCommand> {
         public string nodeId;
         public int count;
 
-        public CommandResult Handle(CollectMazeNodeRewardCommand command)
-        {
+        public CommandResult Handle(CollectMazeNodeRewardCommand command) {
             nodeId = command.nodeId;
             count++;
             return CommandResult.Succeeded("recorded");
@@ -74,15 +62,13 @@ public sealed class MazeVerticalSliceTests
     }
 
     [TearDown]
-    public void TearDown()
-    {
-        if (FrameworkContext.Instance != null)
-            FrameworkContext.Instance.Dispose();
+    public void TearDown() {
+        if (GameContext.Instance != null)
+            GameContext.Instance.Dispose();
     }
 
     [Test]
-    public void MazeSystemImportsConfigStartsRunAndConsumesBeginEnergy()
-    {
+    public void MazeSystemImportsConfigStartsRunAndConsumesBeginEnergy() {
         MazeFixture fixture = CreateMazeFixture();
         int startedEvents = 0;
         fixture.events.Subscribe<MazeRunStartedEvent>(evt => startedEvents++);
@@ -92,7 +78,7 @@ public sealed class MazeVerticalSliceTests
 
         Assert.IsTrue(result.success);
         Assert.AreEqual(1, startedEvents);
-        Assert.AreEqual(99, fixture.player.profile.energy);
+        Assert.AreEqual(99, fixture.player.Profile.energy);
         Assert.AreEqual(7, fixture.world.GetEntitiesWith<MazeNodeComponent>().Count);
         Assert.IsTrue(vm.hasRun);
         Assert.AreEqual(MazeRunState.Running, vm.state);
@@ -100,23 +86,21 @@ public sealed class MazeVerticalSliceTests
     }
 
     [Test]
-    public void MazeSystemAllowsPuzzleRoomWithoutUnlockRequirementButRejectsOtherDisconnectedNodes()
-    {
+    public void MazeSystemAllowsPuzzleRoomWithoutUnlockRequirementButRejectsOtherDisconnectedNodes() {
         MazeFixture fixture = CreateMazeFixture();
         fixture.system.StartRun(fixture.player.playerId, "default", "node_01");
 
         CommandResult disconnected = fixture.system.MoveToNode("node_07");
         Assert.IsFalse(disconnected.success);
         Assert.AreEqual("node_01", fixture.system.GetViewModel().currentNodeId);
-        Assert.AreEqual(99, fixture.player.profile.energy);
+        Assert.AreEqual(99, fixture.player.Profile.energy);
 
         Assert.IsTrue(fixture.system.MoveToNode("node_04").success);
         Assert.AreEqual("node_04", fixture.system.GetViewModel().currentNodeId);
     }
 
     [Test]
-    public void MazeSystemCollectsRewardOnceAndSettlesOnEvacuate()
-    {
+    public void MazeSystemCollectsRewardOnceAndSettlesOnEvacuate() {
         MazeFixture fixture = CreateMazeFixture();
         fixture.system.StartRun(fixture.player.playerId, "default", "node_01");
         fixture.system.MoveToNode("node_02");
@@ -126,7 +110,7 @@ public sealed class MazeVerticalSliceTests
 
         Assert.IsTrue(firstCollect.success);
         Assert.IsFalse(secondCollect.success);
-        Assert.AreEqual(0, fixture.player.inventory.GetAmount("ingredient_carrot"));
+        Assert.AreEqual(0, fixture.player.Inventory.GetAmount("ingredient_carrot"));
         Assert.AreEqual(4, fixture.system.GetViewModel().loot["ingredient_carrot"]);
 
         fixture.system.MoveToNode("node_03");
@@ -140,15 +124,14 @@ public sealed class MazeVerticalSliceTests
         Assert.IsNotNull(runResult);
         Assert.AreEqual(MazeRunState.Evacuated, runResult.state);
         Assert.AreEqual(0.5f, runResult.multiplier);
-        Assert.AreEqual(2, fixture.player.inventory.GetAmount("ingredient_carrot"));
+        Assert.AreEqual(2, fixture.player.Inventory.GetAmount("ingredient_carrot"));
     }
 
     [Test]
-    public void MazeSystemHandlesPuzzleFailureAndSuccess()
-    {
+    public void MazeSystemHandlesPuzzleFailureAndSuccess() {
         MazeFixture fixture = CreateMazeFixture();
         MoveToPuzzle(fixture);
-        int energyBeforeFailure = fixture.player.profile.energy;
+        int energyBeforeFailure = fixture.player.Profile.energy;
 
         CommandResult wrong = fixture.system.ResolvePuzzleEvaluation(
             "puzzle_01",
@@ -159,7 +142,7 @@ public sealed class MazeVerticalSliceTests
         MazeViewModel vm = fixture.system.GetViewModel();
 
         Assert.IsFalse(wrong.success);
-        Assert.AreEqual(energyBeforeFailure - 3, fixture.player.profile.energy);
+        Assert.AreEqual(energyBeforeFailure - 3, fixture.player.Profile.energy);
         Assert.IsTrue(correct.success);
         Assert.Contains("puzzle_01", vm.solvedPuzzleIds);
         Assert.Contains("fragment_01", vm.fragments);
@@ -167,23 +150,22 @@ public sealed class MazeVerticalSliceTests
     }
 
     [Test]
-    public void MazeSystemHandlesTrapSuccessAndFailure()
-    {
+    public void MazeSystemHandlesTrapSuccessAndFailure() {
         MazeFixture successFixture = CreateMazeFixture();
         MoveToTrap(successFixture);
-        int energyBeforeSuccess = successFixture.player.profile.energy;
+        int energyBeforeSuccess = successFixture.player.Profile.energy;
 
         CommandResult success = successFixture.system.ResolveTrap("trap_01", true);
         MazeViewModel successVm = successFixture.system.GetViewModel();
 
         Assert.IsTrue(success.success);
-        Assert.AreEqual(energyBeforeSuccess - 2, successFixture.player.profile.energy);
+        Assert.AreEqual(energyBeforeSuccess - 2, successFixture.player.Profile.energy);
         Assert.AreEqual(MazeRunState.Running, successVm.state);
         Assert.AreEqual(2, successVm.loot["ingredient_salt"]);
 
         MazeFixture failFixture = CreateMazeFixture();
         MoveToTrap(failFixture);
-        int energyBeforeFailure = failFixture.player.profile.energy;
+        int energyBeforeFailure = failFixture.player.Profile.energy;
         CommandResult startTrap = failFixture.system.StartTrap("trap_01");
         CommandResult failed = failFixture.system.ResolveTrap("trap_01", false);
         MazeViewModel failedVm = failed.payload as MazeViewModel;
@@ -192,13 +174,12 @@ public sealed class MazeVerticalSliceTests
         Assert.IsTrue(failed.success);
         Assert.IsNotNull(failedVm);
         Assert.AreEqual(MazeRunState.Running, failedVm.state);
-        Assert.AreEqual(energyBeforeFailure - 10, failFixture.player.profile.energy);
+        Assert.AreEqual(energyBeforeFailure - 10, failFixture.player.Profile.energy);
         Assert.IsFalse(failedVm.trapActive);
     }
 
     [Test]
-    public void MazeSystemPerfectClearSettlesRewardsAndBlueprint()
-    {
+    public void MazeSystemPerfectClearSettlesRewardsAndBlueprint() {
         MazeFixture fixture = CreateMazeFixture();
         fixture.system.StartRun(fixture.player.playerId, "default", "node_01");
         fixture.system.MoveToNode("node_02");
@@ -219,45 +200,42 @@ public sealed class MazeVerticalSliceTests
         Assert.IsNotNull(runResult);
         Assert.IsTrue(runResult.perfectClear);
         Assert.AreEqual(MazeRunEndReason.PerfectClear, runResult.endReason);
-        Assert.AreEqual(8, fixture.player.inventory.GetAmount("ingredient_carrot"));
-        Assert.AreEqual(2, fixture.player.inventory.GetAmount("ingredient_mushroom"));
-        Assert.AreEqual(4, fixture.player.inventory.GetAmount("ingredient_salt"));
-        Assert.IsTrue(fixture.player.blueprints.Contains("blueprint_maze_energy"));
+        Assert.AreEqual(8, fixture.player.Inventory.GetAmount("ingredient_carrot"));
+        Assert.AreEqual(2, fixture.player.Inventory.GetAmount("ingredient_mushroom"));
+        Assert.AreEqual(4, fixture.player.Inventory.GetAmount("ingredient_salt"));
+        Assert.IsTrue(fixture.player.Blueprints.Contains("blueprint_maze_energy"));
     }
 
     [Test]
-    public void MazeSystemTickConsumesTimedEnergy()
-    {
+    public void MazeSystemTickConsumesTimedEnergy() {
         MazeFixture fixture = CreateMazeFixture();
         fixture.system.StartRun(fixture.player.playerId, "default", "node_01");
 
         fixture.world.Tick(10f);
 
-        Assert.AreEqual(97, fixture.player.profile.energy);
+        Assert.AreEqual(97, fixture.player.Profile.energy);
     }
 
 
     [Test]
-    public void MazeSystemUsesFoodAndRejectsEvacuateOutsideEvacuationNode()
-    {
+    public void MazeSystemUsesFoodAndRejectsEvacuateOutsideEvacuationNode() {
         MazeFixture fixture = CreateMazeFixture();
-        fixture.player.inventory.TryAdd("food_test", 1);
+        fixture.player.Inventory.TryAdd("food_test", 1);
         fixture.system.StartRun(fixture.player.playerId, "default", "node_01");
         fixture.system.MoveToNode("node_02");
-        int energyBeforeFood = fixture.player.profile.energy;
+        int energyBeforeFood = fixture.player.Profile.energy;
 
         CommandResult badEvacuate = fixture.system.EvacuateRun();
         CommandResult food = fixture.system.UseFood("food_test");
 
         Assert.IsFalse(badEvacuate.success);
         Assert.IsTrue(food.success);
-        Assert.AreEqual(0, fixture.player.inventory.GetAmount("food_test"));
-        Assert.AreEqual(100, fixture.player.profile.energy);
+        Assert.AreEqual(0, fixture.player.Inventory.GetAmount("food_test"));
+        Assert.AreEqual(100, fixture.player.Profile.energy);
     }
 
     [Test]
-    public void MazeSystemExitPuzzleSupportsNormalAndPerfectClear()
-    {
+    public void MazeSystemExitPuzzleSupportsNormalAndPerfectClear() {
         MazeFixture normalFixture = CreateMazeFixture();
         normalFixture.system.StartRun(normalFixture.player.playerId, "default", "node_01");
         normalFixture.system.MoveToNode("node_02");
@@ -279,7 +257,7 @@ public sealed class MazeVerticalSliceTests
         Assert.AreEqual(MazeRunEndReason.Clear, normalResult.endReason);
         Assert.AreEqual(1f, normalResult.multiplier);
         Assert.IsFalse(normalResult.perfectClear);
-        Assert.AreEqual(4, normalFixture.player.inventory.GetAmount("ingredient_carrot"));
+        Assert.AreEqual(4, normalFixture.player.Inventory.GetAmount("ingredient_carrot"));
 
         MazeFixture perfectFixture = CreateMazeFixture();
         perfectFixture.system.StartRun(perfectFixture.player.playerId, "default", "node_01");
@@ -302,12 +280,11 @@ public sealed class MazeVerticalSliceTests
         Assert.AreEqual(MazeRunEndReason.PerfectClear, perfectResult.endReason);
         Assert.AreEqual(2f, perfectResult.multiplier);
         Assert.AreEqual("blueprint_maze_energy", perfectResult.blueprintId);
-        Assert.IsTrue(perfectFixture.player.blueprints.Contains("blueprint_maze_energy"));
+        Assert.IsTrue(perfectFixture.player.Blueprints.Contains("blueprint_maze_energy"));
     }
     [Test]
-    public void MazeServiceRegistersCommandsAndReturnsStableViewModels()
-    {
-        FrameworkContext framework = new FrameworkContext();
+    public void MazeServiceRegistersCommandsAndReturnsStableViewModels() {
+        GameContext framework = new GameContext();
         framework.Init();
         EcsWorld world = new EcsWorld();
         world.Init();
@@ -340,21 +317,20 @@ public sealed class MazeVerticalSliceTests
 
 
     [Test]
-    public void RealMazeConfigPuzzleCommandsGrantAllFragmentsWithoutExposingAnswers()
-    {
+    public void RealMazeConfigPuzzleCommandsGrantAllFragmentsWithoutExposingAnswers() {
         GameDatabase database = GameDatabase.GetInstance();
         database.Init();
-        Assert.IsNotNull(database.databases);
-        Assert.IsTrue(database.databases.ContainsKey("maze_nodes"));
-        Assert.IsTrue(database.databases.ContainsKey("maze_puzzles"));
-        Assert.IsTrue(database.databases.ContainsKey("maze_fragments"));
-        Assert.IsTrue(database.databases.ContainsKey("maze_rules"));
+        Assert.IsNotNull(database.configdatabases);
+        Assert.IsTrue(database.configdatabases.ContainsKey("maze_nodes"));
+        Assert.IsTrue(database.configdatabases.ContainsKey("maze_puzzles"));
+        Assert.IsTrue(database.configdatabases.ContainsKey("maze_fragments"));
+        Assert.IsTrue(database.configdatabases.ContainsKey("maze_rules"));
         PlayerDatabase player = CreatePlayer("player_real_config", 100);
         database.playerDatabases[player.playerId] = player;
         Assert.IsNotNull(player);
-        Assert.IsNotNull(player.profile);
-        Assert.IsNotNull(player.inventory);
-        FrameworkContext framework = new FrameworkContext();
+        Assert.IsNotNull(player.Profile);
+        Assert.IsNotNull(player.Inventory);
+        GameContext framework = new GameContext();
         framework.Init();
         EcsWorld world = new EcsWorld();
         world.Init();
@@ -365,8 +341,7 @@ public sealed class MazeVerticalSliceTests
         Assert.AreEqual(16, database.GetAll<MazeNodeData>("maze_nodes").Count);
         Assert.AreEqual(4, database.GetAll<MazePuzzleData>("maze_puzzles").Count);
         Assert.AreEqual(4, database.GetAll<MazeFragmentData>("maze_fragments").Count);
-        foreach (MazeNodeData node in database.GetAll<MazeNodeData>("maze_nodes"))
-        {
+        foreach (MazeNodeData node in database.GetAll<MazeNodeData>("maze_nodes")) {
             if (node.nodeType == "puzzle_room")
                 Assert.IsEmpty(node.unlockRequirementIds, node.nodeId);
         }
@@ -422,9 +397,8 @@ public sealed class MazeVerticalSliceTests
         framework.Dispose();
     }
     [Test]
-    public void MazeMediatorNodeAndActionClicksDispatchCommandsOnly()
-    {
-        FrameworkContext framework = new FrameworkContext();
+    public void MazeMediatorNodeAndActionClicksDispatchCommandsOnly() {
+        GameContext framework = new GameContext();
         framework.Init();
         EcsWorld world = new EcsWorld();
         world.Init();
@@ -443,42 +417,39 @@ public sealed class MazeVerticalSliceTests
         MazeMediator mediator = new MazeMediator(view, service, commands, framework.Events);
 
         mediator.Refresh();
-        int energyBeforeMoveClick = player.profile.energy;
+        int energyBeforeMoveClick = player.Profile.energy;
         mediator.OnNodeClicked(2);
 
         Assert.AreEqual("node_02", moveHandler.nodeId);
         Assert.AreEqual(1, moveHandler.count);
-        Assert.AreEqual(energyBeforeMoveClick, player.profile.energy);
+        Assert.AreEqual(energyBeforeMoveClick, player.Profile.energy);
         Assert.AreEqual("node_01", service.GetViewModel().currentNodeId);
 
         service.MoveToNode("node_02");
         mediator.Refresh();
-        int inventoryBeforeCollectClick = player.inventory.GetAmount("ingredient_carrot");
+        int inventoryBeforeCollectClick = player.Inventory.GetAmount("ingredient_carrot");
         mediator.CollectReward();
 
         Assert.AreEqual("node_02", collectHandler.nodeId);
         Assert.AreEqual(1, collectHandler.count);
-        Assert.AreEqual(inventoryBeforeCollectClick, player.inventory.GetAmount("ingredient_carrot"));
+        Assert.AreEqual(inventoryBeforeCollectClick, player.Inventory.GetAmount("ingredient_carrot"));
         mediator.Dispose();
     }
 
 
-    private static void MoveToPuzzle(MazeFixture fixture)
-    {
+    private static void MoveToPuzzle(MazeFixture fixture) {
         fixture.system.StartRun(fixture.player.playerId, "default", "node_01");
         fixture.system.MoveToNode("node_02");
         fixture.system.MoveToNode("node_03");
         fixture.system.MoveToNode("node_04");
     }
 
-    private static void MoveToTrap(MazeFixture fixture)
-    {
+    private static void MoveToTrap(MazeFixture fixture) {
         MoveToPuzzle(fixture);
         fixture.system.MoveToNode("node_05");
     }
 
-    private static MazeFixture CreateMazeFixture()
-    {
+    private static MazeFixture CreateMazeFixture() {
         PlayerDatabase player = CreatePlayer("player_test", 100);
         GameDatabase database = CreateMazeDatabase(player);
         EventBus events = new EventBus();
@@ -487,8 +458,7 @@ public sealed class MazeVerticalSliceTests
         world.RegisterSystem(system);
         world.Init();
 
-        return new MazeFixture
-        {
+        return new MazeFixture {
             database = database,
             player = player,
             events = events,
@@ -497,12 +467,11 @@ public sealed class MazeVerticalSliceTests
         };
     }
 
-    private static GameDatabase CreateMazeDatabase(PlayerDatabase player)
-    {
+    private static GameDatabase CreateMazeDatabase(PlayerDatabase player) {
         GameDatabase database = new GameDatabase();
         database.playerDatabases[player.playerId] = player;
 
-        database.databases["maze_nodes"] = new Dictionary<string, BaseData>
+        database.configdatabases["maze_nodes"] = new Dictionary<string, BaseData>
         {
             { "node_01", Node("node_01", 1, "entrance", new[] { "node_02", "node_04" }) },
             { "node_02", Node("node_02", 2, "corridor_reward", new[] { "node_03" }, rewardItems: new Dictionary<string, int> { { "ingredient_carrot", 4 } }) },
@@ -512,7 +481,7 @@ public sealed class MazeVerticalSliceTests
             { "node_06", Node("node_06", 6, "evacuate", new[] { "node_07" }) },
             { "node_07", Node("node_07", 7, "exit", new string[0]) }
         };
-        database.databases["maze_puzzles"] = new Dictionary<string, BaseData>
+        database.configdatabases["maze_puzzles"] = new Dictionary<string, BaseData>
         {
             {
                 "puzzle_01",
@@ -530,7 +499,7 @@ public sealed class MazeVerticalSliceTests
                 }
             }
         };
-        database.databases["maze_traps"] = new Dictionary<string, BaseData>
+        database.configdatabases["maze_traps"] = new Dictionary<string, BaseData>
         {
             {
                 "trap_01",
@@ -546,7 +515,7 @@ public sealed class MazeVerticalSliceTests
                 }
             }
         };
-        database.databases["maze_fragments"] = new Dictionary<string, BaseData>
+        database.configdatabases["maze_fragments"] = new Dictionary<string, BaseData>
         {
             {
                 "fragment_01",
@@ -559,7 +528,7 @@ public sealed class MazeVerticalSliceTests
                 }
             }
         };
-        database.databases["foods"] = new Dictionary<string, BaseData>
+        database.configdatabases["foods"] = new Dictionary<string, BaseData>
         {
             {
                 "food_test",
@@ -574,7 +543,7 @@ public sealed class MazeVerticalSliceTests
                 }
             }
         };
-        database.databases["maze_rules"] = new Dictionary<string, BaseData>
+        database.configdatabases["maze_rules"] = new Dictionary<string, BaseData>
         {
             {
                 "default",
@@ -605,10 +574,8 @@ public sealed class MazeVerticalSliceTests
         string puzzleId = null,
         string trapId = null,
         IEnumerable<string> unlockRequirementIds = null,
-        Dictionary<string, int> rewardItems = null)
-    {
-        return new MazeNodeData
-        {
+        Dictionary<string, int> rewardItems = null) {
+        return new MazeNodeData {
             nodeId = nodeId,
             index = index,
             nodeType = nodeType,
@@ -627,19 +594,18 @@ public sealed class MazeVerticalSliceTests
         };
     }
 
-    private static PlayerDatabase CreatePlayer(string playerId, int energy)
-    {
+    private static PlayerDatabase CreatePlayer(string playerId, int energy) {
         PlayerDatabase player = new PlayerDatabase();
         player.playerId = playerId;
-        player.profile = new PlayerProfile();
-        player.profile.init(playerId);
-        player.profile.energy = energy;
-        player.profile.maxEnergy = 100;
-        player.inventory = new PlayerInventory();
-        player.inventory.playerId = playerId;
-        player.collections = new PlayerCollections();
-        player.blueprints = new HashSet<string>();
-        player.activeBuffs = new List<ActiveBuff>();
+        player.Profile = new PlayerProfile();
+        player.Profile.init(playerId);
+        player.Profile.energy = energy;
+        player.Profile.maxEnergy = 100;
+        player.Inventory = new PlayerInventory();
+        player.Inventory.playerId = playerId;
+        player.Collections = new PlayerCollections();
+        player.Blueprints = new HashSet<string>();
+        player.ActiveBuffs = new List<ActiveBuff>();
         return player;
     }
 }

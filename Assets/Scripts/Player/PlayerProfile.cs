@@ -1,46 +1,46 @@
 [System.Serializable]
-public class PlayerProfile
-{
+public class PlayerProfile {
     public string playerId;
     public string playerDisplayName;
     public int currency;
-    public int maxCurrency=100;
+    public int maxCurrency = 100;
     public int energy;
-    public int maxEnergy=100;
+    public int maxEnergy = 100;
     public int level;
     public string equippedOutfitId;
 
-    public void init(string playerId)
-    {
+    public void Init(string playerId) {
         this.playerId = playerId;
-        playerDisplayName = playerId;
-        currency = 0;
-        maxCurrency = 100;
-        energy = maxEnergy;
-        level = 1;
-        equippedOutfitId = string.Empty;
+        PlayerProfile _profile = GameDatabase.Instance.Get<PlayerStartData>("player_start", this.playerId).profile;
+        playerDisplayName = _profile.playerDisplayName;
+        currency = _profile.currency;
+        maxCurrency = _profile.maxCurrency;
+        energy = _profile.energy;
+        maxEnergy = _profile.maxEnergy;
+        level = _profile.level;
+        equippedOutfitId = _profile.equippedOutfitId;
     }
 
-    public void ReplaceFrom(PlayerStartData data)
-    {
-        init(data?.profile != null && !string.IsNullOrEmpty(data.profile.playerId)
-            ? data.profile.playerId
-            : playerId);
-
-        if (data?.profile == null)
-            return;
-
-        PlayerProfile source = data.profile;
-        playerDisplayName = string.IsNullOrEmpty(source.playerDisplayName) ? playerDisplayName : source.playerDisplayName;
-        currency = source.currency;
-        maxCurrency = source.maxCurrency > 0 ? source.maxCurrency : maxCurrency;
-        energy = source.energy;
-        maxEnergy = source.maxEnergy > 0 ? source.maxEnergy : maxEnergy;
-        if (maxEnergy > 0 && energy <= 0)
-            energy = maxEnergy;
-        if (energy > maxEnergy)
-            energy = maxEnergy;
-        level = source.level > 0 ? source.level : level;
-        equippedOutfitId = source.equippedOutfitId;
+    public void UpdateData(DataBag newdata) {
+        string _id = newdata.Get("playerId", "");
+        if (_id != "") {
+            playerId = _id;
+        }
+        string _name = newdata.Get("playerDisplayName", "");
+        if (_name != "") {
+            playerDisplayName = _name;
+        }
+        int _currency = newdata.Get("currency", currency);
+        if (_currency != currency) {
+            currency = _currency;
+        }
+        int _energy = newdata.Get("energy", energy);
+        if (_energy != energy) {
+            energy = _energy;
+        }
+        int _level = newdata.Get("level", level);
+        if (_level != level) {
+            level = _level;
+        }
     }
 }

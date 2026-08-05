@@ -4,8 +4,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
-public sealed class MazeUIController : BaseUIController, IMazeView
-{
+public sealed class MazeUIController : BaseUIController, IMazeView {
     private const int MaxNodeButtons = 16;
 
     public override bool hasInputBlocker => true;
@@ -44,37 +43,31 @@ public sealed class MazeUIController : BaseUIController, IMazeView
     private MazeMediator mediator;
     private MazeViewModel lastViewModel;
 
-    public override void BindUI()
-    {
+    public override void BindUI() {
         CacheReferences();
     }
 
-    public override void EventMapper()
-    {
+    public override void EventMapper() {
         WireNodeButtons();
         WireGameplayButtons();
     }
 
-    public override void OnOpen()
-    {
+    public override void OnOpen() {
         CreateMediator();
         mediator.Initialize();
     }
 
-    public override void OnRefresh()
-    {
+    public override void OnRefresh() {
         mediator?.Refresh();
     }
 
-    public override void Dismiss()
-    {
+    public override void Dismiss() {
         mediator?.Dispose();
         mediator = null;
         base.Dismiss();
     }
 
-    public void Render(MazeViewModel viewModel)
-    {
+    public void Render(MazeViewModel viewModel) {
         lastViewModel = viewModel ?? CreateEmptyViewModel();
         UpdateSummary(lastViewModel);
         UpdateNodeButtons(lastViewModel);
@@ -89,22 +82,19 @@ public sealed class MazeUIController : BaseUIController, IMazeView
             RenderNodeActionPanel(lastViewModel);
     }
 
-    public void ShowNodeActions(MazeViewModel viewModel)
-    {
+    public void ShowNodeActions(MazeViewModel viewModel) {
         lastViewModel = viewModel ?? lastViewModel ?? CreateEmptyViewModel();
         if (nodeActionPanel != null)
             nodeActionPanel.SetActive(true);
         RenderNodeActionPanel(lastViewModel);
     }
 
-    public void HideNodeActions()
-    {
+    public void HideNodeActions() {
         if (nodeActionPanel != null)
             nodeActionPanel.SetActive(false);
     }
 
-    public void ShowMessage(string message)
-    {
+    public void ShowMessage(string message) {
         if (string.IsNullOrEmpty(message))
             return;
 
@@ -112,8 +102,7 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         Debug.Log("[MazeUI] " + message);
     }
 
-    public void ShowResult(MazeRunResult result)
-    {
+    public void ShowResult(MazeRunResult result) {
         if (result == null)
             return;
 
@@ -122,12 +111,10 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         RenderResult(result);
     }
 
-    private void CacheReferences()
-    {
+    private void CacheReferences() {
         nodeButtons.Clear();
         nodeLabels.Clear();
-        for (int i = 1; i <= MaxNodeButtons; i++)
-        {
+        for (int i = 1; i <= MaxNodeButtons; i++) {
             Button button = FindButton("MazeNode_" + i);
             Text label = FindText("MazeNode_" + i + "Text");
             if (button != null)
@@ -170,17 +157,14 @@ public sealed class MazeUIController : BaseUIController, IMazeView
             resultPanel.SetActive(false);
     }
 
-    private void WireNodeButtons()
-    {
-        foreach (KeyValuePair<int, Button> kv in nodeButtons)
-        {
+    private void WireNodeButtons() {
+        foreach (KeyValuePair<int, Button> kv in nodeButtons) {
             int index = kv.Key;
             BindClickEvent(kv.Value, () => mediator?.OnNodeClicked(index));
         }
     }
 
-    private void WireGameplayButtons()
-    {
+    private void WireGameplayButtons() {
         BindClickEvent(rewardGameplayButton, () => mediator?.CollectReward());
         BindClickEvent(switchGameplayButton, () => mediator?.ActivateSwitch());
         BindClickEvent(puzzleGameplayButton, () => mediator?.OpenCurrentPuzzle());
@@ -193,22 +177,19 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         BindClickEvent(nodeActionCloseButton, HideNodeActions);
     }
 
-    private void CreateMediator()
-    {
-        GameServices services = GameManager.Instance != null ? GameManager.Instance.Services : null;
+    private void CreateMediator() {
+        GameServices services = GameManager.Instance != null ? GameManager.Instance.services : null;
         mediator?.Dispose();
         mediator = new MazeMediator(this, services?.Maze, services?.Commands, services?.Events);
     }
 
-    private void UpdateSummary(MazeViewModel vm)
-    {
+    private void UpdateSummary(MazeViewModel vm) {
         UIHelper.SetText(energyText, "Energy: " + vm.currentEnergy + "/" + vm.maxEnergy);
         UIHelper.SetText(lootText, "Loot: " + FormatRewards(vm.loot));
         UIHelper.SetText(fragmentsText, "Fragments: " + vm.fragmentCount + "/" + vm.totalFragmentCount + " " + (vm.fragments.Count == 0 ? "none" : string.Join(", ", vm.fragments)));
         UIHelper.SetText(messageText, string.IsNullOrEmpty(vm.message) ? "Maze is ready." : vm.message);
 
-        if (!vm.hasRun)
-        {
+        if (!vm.hasRun) {
             UIHelper.SetText(nodeDetailText, "Maze run has not started.");
             return;
         }
@@ -218,18 +199,15 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         sb.Append(vm.currentNodeIndex);
         sb.Append(" ");
         sb.AppendLine(string.IsNullOrEmpty(vm.currentNodeTitle) ? vm.currentNodeId : vm.currentNodeTitle);
-        if (!string.IsNullOrEmpty(vm.currentNodeType))
-        {
+        if (!string.IsNullOrEmpty(vm.currentNodeType)) {
             sb.Append("Type: ");
             sb.AppendLine(vm.currentNodeType);
         }
         if (!string.IsNullOrEmpty(vm.currentNodeNote))
             sb.AppendLine(vm.currentNodeNote);
-        if (vm.reachableNodeIds.Count > 0)
-        {
+        if (vm.reachableNodeIds.Count > 0) {
             sb.Append("Next: ");
-            for (int i = 0; i < vm.reachableNodeIds.Count; i++)
-            {
+            for (int i = 0; i < vm.reachableNodeIds.Count; i++) {
                 if (i > 0)
                     sb.Append(", ");
                 sb.Append(ResolveNodeLabel(vm, vm.reachableNodeIds[i]));
@@ -244,14 +222,12 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         UIHelper.SetText(nodeDetailText, sb.ToString());
     }
 
-    private void UpdateNodeButtons(MazeViewModel vm)
-    {
+    private void UpdateNodeButtons(MazeViewModel vm) {
         Dictionary<int, string> idsByIndex = new Dictionary<int, string>();
         foreach (KeyValuePair<string, int> kv in vm.nodeIndices)
             idsByIndex[kv.Value] = kv.Key;
 
-        for (int i = 1; i <= MaxNodeButtons; i++)
-        {
+        for (int i = 1; i <= MaxNodeButtons; i++) {
             nodeButtons.TryGetValue(i, out Button button);
             nodeLabels.TryGetValue(i, out Text label);
             bool hasNode = idsByIndex.TryGetValue(i, out string nodeId);
@@ -260,8 +236,7 @@ public sealed class MazeUIController : BaseUIController, IMazeView
             if (label == null)
                 continue;
 
-            if (!hasNode)
-            {
+            if (!hasNode) {
                 label.text = "Node " + i;
                 continue;
             }
@@ -278,8 +253,7 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         }
     }
 
-    private void UpdateGameplayButtons(MazeViewModel vm)
-    {
+    private void UpdateGameplayButtons(MazeViewModel vm) {
         bool running = vm.hasRun && !vm.isEnded && vm.state == MazeRunState.Running;
         SetButtonState(rewardGameplayButton, running && vm.canCollectReward);
         SetButtonState(switchGameplayButton, running && vm.canActivateSwitch);
@@ -292,10 +266,9 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         SetButtonState(returnToShopButton, true);
     }
 
-    private void RenderNodeActionPanel(MazeViewModel vm)
-    {
-        UIHelper.SetText(nodeActionTitleText, string.IsNullOrEmpty(vm.currentNodeTitle) ? "Current Node" : vm.currentNodeTitle);
-        UIHelper.SetText(nodeActionBodyText, BuildActionBody(vm));
+    private void RenderNodeActionPanel(MazeViewModel vm) {
+        SetText(nodeActionTitleText, string.IsNullOrEmpty(vm.currentNodeTitle) ? "Current Node" : vm.currentNodeTitle);
+        SetText(nodeActionBodyText, BuildActionBody(vm));
 
         ClearClickEvent(nodeActionPrimaryButton);
         ClearClickEvent(nodeActionSecondaryButton);
@@ -311,8 +284,7 @@ public sealed class MazeUIController : BaseUIController, IMazeView
             SetButtonState(nodeActionSecondaryButton, false);
     }
 
-    private List<ActionEntry> BuildActions(MazeViewModel vm)
-    {
+    private List<ActionEntry> BuildActions(MazeViewModel vm) {
         List<ActionEntry> actions = new List<ActionEntry>();
         if (vm.canUseFood)
             actions.Add(new ActionEntry("Use Food", () => mediator?.UseRecommendedFood()));
@@ -339,44 +311,37 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         return actions;
     }
 
-    private string BuildActionBody(MazeViewModel vm)
-    {
+    private string BuildActionBody(MazeViewModel vm) {
         StringBuilder sb = new StringBuilder();
-        if (!string.IsNullOrEmpty(vm.currentNodeType))
-        {
+        if (!string.IsNullOrEmpty(vm.currentNodeType)) {
             sb.Append("Type: ");
             sb.AppendLine(vm.currentNodeType);
         }
         if (!string.IsNullOrEmpty(vm.currentNodeNote))
             sb.AppendLine(vm.currentNodeNote);
-        if (!string.IsNullOrEmpty(vm.puzzleId))
-        {
+        if (!string.IsNullOrEmpty(vm.puzzleId)) {
             sb.Append("Puzzle: ");
             sb.AppendLine(vm.puzzleId);
         }
-        if (!string.IsNullOrEmpty(vm.trapId))
-        {
+        if (!string.IsNullOrEmpty(vm.trapId)) {
             sb.Append("Trap: ");
             sb.AppendLine(vm.trapId);
         }
         if (!string.IsNullOrEmpty(vm.trapMessage))
             sb.AppendLine(vm.trapMessage);
-        if (!string.IsNullOrEmpty(vm.trapGuideNodeId))
-        {
+        if (!string.IsNullOrEmpty(vm.trapGuideNodeId)) {
             sb.Append("Guide: ");
             sb.AppendLine(vm.trapGuideNodeId);
         }
         if (!string.IsNullOrEmpty(vm.exitPuzzleMessage))
             sb.AppendLine(vm.exitPuzzleMessage);
-        if (vm.totalFragmentCount > 0)
-        {
+        if (vm.totalFragmentCount > 0) {
             sb.Append("Puzzle progress: ");
             sb.Append(vm.fragmentCount);
             sb.Append("/");
             sb.AppendLine(vm.totalFragmentCount.ToString());
         }
-        if (vm.canUseFood && !string.IsNullOrEmpty(vm.recommendedFoodId))
-        {
+        if (vm.canUseFood && !string.IsNullOrEmpty(vm.recommendedFoodId)) {
             sb.Append("Food: ");
             sb.AppendLine(vm.recommendedFoodId);
         }
@@ -385,22 +350,19 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         return sb.ToString();
     }
 
-    private void BindActionButton(Button button, Text label, ActionEntry action)
-    {
+    private void BindActionButton(Button button, Text label, ActionEntry action) {
         if (button == null)
             return;
 
         SetButtonState(button, true);
         UIHelper.SetText(label, action.label);
-        BindClickEvent(button, () =>
-        {
+        BindClickEvent(button, () => {
             HideNodeActions();
             action.action?.Invoke();
         });
     }
 
-    private void RenderResult(MazeRunResult result)
-    {
+    private void RenderResult(MazeRunResult result) {
         UIHelper.SetText(resultTitleText, "Maze " + result.endReason);
 
         StringBuilder sb = new StringBuilder();
@@ -416,21 +378,18 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         sb.AppendLine(FormatRewards(result.finalRewards));
         sb.Append("Fragments: ");
         sb.AppendLine(result.fragments.Count == 0 ? "none" : string.Join(", ", result.fragments));
-        if (result.lostFragments.Count > 0)
-        {
+        if (result.lostFragments.Count > 0) {
             sb.Append("Lost: ");
             sb.AppendLine(string.Join(", ", result.lostFragments));
         }
-        if (!string.IsNullOrEmpty(result.blueprintId))
-        {
+        if (!string.IsNullOrEmpty(result.blueprintId)) {
             sb.Append("Blueprint: ");
             sb.AppendLine(result.blueprintId);
         }
         UIHelper.SetText(resultBodyText, sb.ToString());
     }
 
-    private static void SetButtonState(Button button, bool visible)
-    {
+    private static void SetButtonState(Button button, bool visible) {
         if (button == null)
             return;
 
@@ -439,15 +398,13 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         button.interactable = visible;
     }
 
-    private static string FormatRewards(Dictionary<string, int> rewards)
-    {
+    private static string FormatRewards(Dictionary<string, int> rewards) {
         if (rewards == null || rewards.Count == 0)
             return "none";
 
         StringBuilder sb = new StringBuilder();
         bool first = true;
-        foreach (KeyValuePair<string, int> kv in rewards)
-        {
+        foreach (KeyValuePair<string, int> kv in rewards) {
             if (!first)
                 sb.Append(", ");
             sb.Append(kv.Key);
@@ -458,29 +415,24 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         return sb.ToString();
     }
 
-    private static string ResolveNodeLabel(MazeViewModel vm, string nodeId)
-    {
+    private static string ResolveNodeLabel(MazeViewModel vm, string nodeId) {
         if (vm.nodeTitles.TryGetValue(nodeId, out string title) && !string.IsNullOrEmpty(title))
             return title;
         return nodeId;
     }
 
-    private static MazeViewModel CreateEmptyViewModel()
-    {
-        return new MazeViewModel
-        {
+    private static MazeViewModel CreateEmptyViewModel() {
+        return new MazeViewModel {
             state = MazeRunState.NotStarted,
             message = "Maze is ready."
         };
     }
 
-    private sealed class ActionEntry
-    {
+    private sealed class ActionEntry {
         public readonly string label;
         public readonly Action action;
 
-        public ActionEntry(string label, Action action)
-        {
+        public ActionEntry(string label, Action action) {
             this.label = label;
             this.action = action;
         }

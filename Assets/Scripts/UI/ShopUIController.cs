@@ -3,8 +3,7 @@ using System.Text;
 using UnityEngine;
 using UnityEngine.UI;
 
-public sealed class ShopUIController : BaseUIController
-{
+public sealed class ShopUIController : BaseUIController {
     private Text shopStateText;
     private Text hintText;
     private Text inventoryText;
@@ -21,13 +20,11 @@ public sealed class ShopUIController : BaseUIController
     private string defaultRecipeId = "recipe1";
     private int defaultPlaceAmount = 1;
 
-    public override void BindUI()
-    {
+    public override void BindUI() {
         AutoBindMissingReferences();
     }
 
-    public override void EventMapper()
-    {
+    public override void EventMapper() {
         GameEvents.OnShopChanged += Refresh;
         GameEvents.OnInventoryChanged += Refresh;
         GameEvents.OnCraftingChanged += Refresh;
@@ -35,13 +32,11 @@ public sealed class ShopUIController : BaseUIController
         WireButtons();
     }
 
-    public override void OnOpen()
-    {
+    public override void OnOpen() {
         Refresh();
     }
 
-    public override void Dismiss()
-    {
+    public override void Dismiss() {
         GameEvents.OnShopChanged -= Refresh;
         GameEvents.OnInventoryChanged -= Refresh;
         GameEvents.OnCraftingChanged -= Refresh;
@@ -49,11 +44,9 @@ public sealed class ShopUIController : BaseUIController
         base.Dismiss();
     }
 
-    public void PlaceDefaultFood()
-    {
-        var services = GameManager.Instance?.Services;
-        if (services?.Shop == null)
-        {
+    public void PlaceDefaultFood() {
+        var services = GameManager.Instance?.services;
+        if (services?.Shop == null) {
             ShowHint("Shop service is not ready.");
             return;
         }
@@ -61,15 +54,13 @@ public sealed class ShopUIController : BaseUIController
         if (TryPlaceFirstAvailableFood())
             return;
 
-        if (services.Crafting == null)
-        {
+        if (services.Crafting == null) {
             ShowHint("Crafting service is not ready.");
             return;
         }
 
         CraftingJob job = services.Crafting.StartCraft(defaultRecipeId);
-        if (job == null)
-        {
+        if (job == null) {
             ShowHint("Not enough ingredients. " + BuildRecipeCostText(defaultRecipeId));
             return;
         }
@@ -79,17 +70,14 @@ public sealed class ShopUIController : BaseUIController
             ShowHint("Food crafted and stored in backpack.");
     }
 
-    public void SellFirstSlot()
-    {
-        ShopService shop = GameManager.Instance?.Services?.Shop;
-        if (shop == null)
-        {
+    public void SellFirstSlot() {
+        ShopService shop = GameManager.Instance?.services?.Shop;
+        if (shop == null) {
             ShowHint("Shop service is not ready.");
             return;
         }
 
-        foreach (ShopDisplaySlot slot in shop.GetDisplaySlots())
-        {
+        foreach (ShopDisplaySlot slot in shop.GetDisplaySlots()) {
             if (slot.IsEmpty)
                 continue;
 
@@ -103,41 +91,34 @@ public sealed class ShopUIController : BaseUIController
         ShowHint("No food on display.");
     }
 
-    public void GoToMaze()
-    {
+    public void GoToMaze() {
         if (SceneFlowManager.Instance != null)
             SceneFlowManager.Instance.GoToMaze();
         Debug.Log("GoToMaze");
     }
 
-    public void GoToMainMenu()
-    {
+    public void GoToMainMenu() {
         if (SceneFlowManager.Instance != null)
             SceneFlowManager.Instance.GoToMain();
         Debug.Log("GoToMainMenu");
     }
 
-    private void OnCollectionChanged(CollectionCategory category)
-    {
+    private void OnCollectionChanged(CollectionCategory category) {
         if (category == CollectionCategory.Outfit || category == CollectionCategory.Food)
             Refresh();
     }
 
-    private void Refresh()
-    {
+    private void Refresh() {
         if (shopStateText == null)
             return;
 
         StringBuilder sb = new StringBuilder();
-        if (GameManager.Instance?.Services?.Shop == null)
-        {
+        if (GameManager.Instance?.services?.Shop == null) {
             sb.AppendLine("Shop service is not ready.");
         }
-        else
-        {
+        else {
             sb.AppendLine("Display Slots");
-            foreach (ShopDisplaySlot slot in GameManager.Instance.Services.Shop.GetDisplaySlots())
-            {
+            foreach (ShopDisplaySlot slot in GameManager.Instance.services.Shop.GetDisplaySlots()) {
                 string slotText = slot.IsEmpty ? "Empty" : $"{slot.foodId} x{slot.amount}";
                 sb.AppendLine($"Slot {slot.slotId}: {slotText}");
             }
@@ -147,8 +128,7 @@ public sealed class ShopUIController : BaseUIController
         RefreshOutfitPanel();
     }
 
-    private void WireButtons()
-    {
+    private void WireButtons() {
         BindClickEvent(ovenButton, PlaceDefaultFood);
         BindClickEvent(displayButton, SellFirstSlot);
         BindClickEvent(mazeButton, GoToMaze);
@@ -157,8 +137,7 @@ public sealed class ShopUIController : BaseUIController
         BindClickEvent(outfitButton, ShowOutfitHint);
     }
 
-    private void ShowBackpackHint()
-    {
+    private void ShowBackpackHint() {
         TogglePanel(inventoryPanel);
         if (outfitPanel != null)
             outfitPanel.SetActive(false);
@@ -166,8 +145,7 @@ public sealed class ShopUIController : BaseUIController
         ShowHint("Backpack opened.");
     }
 
-    private void ShowOutfitHint()
-    {
+    private void ShowOutfitHint() {
         TogglePanel(outfitPanel);
         if (inventoryPanel != null)
             inventoryPanel.SetActive(false);
@@ -175,35 +153,30 @@ public sealed class ShopUIController : BaseUIController
         ShowHint("Outfit panel opened.");
     }
 
-    private void ShowHint(string message)
-    {
+    private void ShowHint(string message) {
         if (hintText != null)
             UIHelper.SetText(hintText, message);
 
         Debug.Log($"[ShopUI] {message}");
     }
 
-    private bool TryPlaceFirstAvailableFood()
-    {
-        PlayerInventory inventory = GameDatabase.Instance?.GetPlayerData()?.inventory;
-        ShopService shop = GameManager.Instance?.Services?.Shop;
+    private bool TryPlaceFirstAvailableFood() {
+        PlayerInventory inventory = GameDatabase.Instance?.GetPlayerData()?.Inventory;
+        ShopService shop = GameManager.Instance?.services?.Shop;
         if (inventory == null || shop == null)
             return false;
 
         if (inventory.GetAmount(defaultFoodId) >= defaultPlaceAmount
-            && shop.PlaceFood(defaultFoodId, defaultPlaceAmount))
-        {
+            && shop.PlaceFood(defaultFoodId, defaultPlaceAmount)) {
             ShowHint($"Placed {ResolveDisplayName(defaultFoodId)} on display.");
             return true;
         }
 
-        foreach (KeyValuePair<string, int> kv in inventory.GetSnapshot())
-        {
+        foreach (KeyValuePair<string, int> kv in inventory.GetSnapshot()) {
             if (kv.Value < defaultPlaceAmount || !IsSellableFood(kv.Key))
                 continue;
 
-            if (shop.PlaceFood(kv.Key, defaultPlaceAmount))
-            {
+            if (shop.PlaceFood(kv.Key, defaultPlaceAmount)) {
                 ShowHint($"Placed {ResolveDisplayName(kv.Key)} on display.");
                 return true;
             }
@@ -212,22 +185,19 @@ public sealed class ShopUIController : BaseUIController
         return false;
     }
 
-    private bool TryPlaceFirstOutput(CraftingJob job)
-    {
+    private bool TryPlaceFirstOutput(CraftingJob job) {
         if (job?.outputItems == null)
             return false;
 
-        ShopService shop = GameManager.Instance?.Services?.Shop;
+        ShopService shop = GameManager.Instance?.services?.Shop;
         if (shop == null)
             return false;
 
-        foreach (string itemId in job.outputItems)
-        {
+        foreach (string itemId in job.outputItems) {
             if (!IsSellableFood(itemId))
                 continue;
 
-            if (shop.PlaceFood(itemId, defaultPlaceAmount))
-            {
+            if (shop.PlaceFood(itemId, defaultPlaceAmount)) {
                 ShowHint($"Cooked and placed {ResolveDisplayName(itemId)}.");
                 return true;
             }
@@ -236,14 +206,12 @@ public sealed class ShopUIController : BaseUIController
         return false;
     }
 
-    private void RefreshInventoryPanel()
-    {
+    private void RefreshInventoryPanel() {
         if (inventoryText == null)
             return;
 
-        PlayerInventory inventory = GameDatabase.Instance?.GetPlayerData()?.inventory;
-        if (inventory == null)
-        {
+        PlayerInventory inventory = GameDatabase.Instance?.GetPlayerData()?.Inventory;
+        if (inventory == null) {
             inventoryText.text = "Backpack is not ready.";
             return;
         }
@@ -251,12 +219,10 @@ public sealed class ShopUIController : BaseUIController
         StringBuilder sb = new StringBuilder();
         sb.AppendLine("Backpack");
         IReadOnlyDictionary<string, int> snapshot = inventory.GetSnapshot();
-        if (snapshot.Count == 0)
-        {
+        if (snapshot.Count == 0) {
             sb.AppendLine("Empty");
         }
-        else
-        {
+        else {
             foreach (KeyValuePair<string, int> kv in snapshot)
                 sb.AppendLine($"{ResolveDisplayName(kv.Key)} x{kv.Value}");
         }
@@ -264,28 +230,24 @@ public sealed class ShopUIController : BaseUIController
         inventoryText.text = sb.ToString();
     }
 
-    private void RefreshOutfitPanel()
-    {
+    private void RefreshOutfitPanel() {
         if (outfitText == null)
             return;
 
         PlayerDatabase player = GameDatabase.Instance?.GetPlayerData();
-        if (player?.collections == null || player.profile == null)
-        {
+        if (player?.Collections == null || player.Profile == null) {
             outfitText.text = "Outfit data is not ready.";
             return;
         }
 
         StringBuilder sb = new StringBuilder();
         sb.AppendLine("Outfits");
-        sb.AppendLine($"Equipped: {ResolveDisplayName(player.profile.equippedOutfitId)}");
-        IReadOnlyCollection<string> unlocked = player.collections.GetUnlocked(CollectionCategory.Outfit);
-        if (unlocked.Count == 0)
-        {
+        sb.AppendLine($"Equipped: {ResolveDisplayName(player.Profile.equippedOutfitId)}");
+        IReadOnlyCollection<string> unlocked = player.Collections.GetUnlocked(CollectionCategory.Outfit);
+        if (unlocked.Count == 0) {
             sb.AppendLine("No outfit unlocked.");
         }
-        else
-        {
+        else {
             foreach (string outfitId in unlocked)
                 sb.AppendLine(ResolveDisplayName(outfitId));
         }
@@ -293,18 +255,15 @@ public sealed class ShopUIController : BaseUIController
         outfitText.text = sb.ToString();
     }
 
-    private void TogglePanel(GameObject panel)
-    {
+    private void TogglePanel(GameObject panel) {
         UIHelper.ToggleActive(panel);
     }
 
-    private bool IsSellableFood(string itemId)
-    {
+    private bool IsSellableFood(string itemId) {
         return GameDatabase.Instance?.Get<FoodData>("foods", itemId) != null;
     }
 
-    private int ResolvePrice(string itemId)
-    {
+    private int ResolvePrice(string itemId) {
         FoodData food = GameDatabase.Instance?.Get<FoodData>("foods", itemId);
         if (food != null)
             return food.price;
@@ -313,8 +272,7 @@ public sealed class ShopUIController : BaseUIController
         return item != null ? item.price : 0;
     }
 
-    private string ResolveDisplayName(string id)
-    {
+    private string ResolveDisplayName(string id) {
         if (string.IsNullOrEmpty(id))
             return "None";
 
@@ -337,16 +295,14 @@ public sealed class ShopUIController : BaseUIController
         return id;
     }
 
-    private string BuildRecipeCostText(string recipeId)
-    {
+    private string BuildRecipeCostText(string recipeId) {
         RecipeData recipe = GameDatabase.Instance?.Get<RecipeData>("recipes", recipeId);
         if (recipe?.ingredients == null || recipe.ingredients.Count == 0)
             return string.Empty;
 
         StringBuilder sb = new StringBuilder("Need: ");
         bool first = true;
-        foreach (KeyValuePair<string, int> kv in recipe.ingredients)
-        {
+        foreach (KeyValuePair<string, int> kv in recipe.ingredients) {
             if (!first)
                 sb.Append(", ");
             sb.Append(ResolveDisplayName(kv.Key));
@@ -358,8 +314,7 @@ public sealed class ShopUIController : BaseUIController
         return sb.ToString();
     }
 
-    private void AutoBindMissingReferences()
-    {
+    private void AutoBindMissingReferences() {
         if (shopStateText == null)
             shopStateText = FindText("Shop State Text");
         if (hintText == null)
