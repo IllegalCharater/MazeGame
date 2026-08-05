@@ -5,6 +5,8 @@ public interface IMazeView
     void Render(MazeViewModel viewModel);
     void ShowNodeActions(MazeViewModel viewModel);
     void HideNodeActions();
+    void ShowExitPuzzle(MazeViewModel viewModel);
+    void HideExitPuzzle();
     void ShowMessage(string message);
     void ShowResult(MazeRunResult result);
 }
@@ -98,7 +100,12 @@ public sealed class MazeMediator : IDisposable
 
         if (vm.currentNodeId == nodeId)
         {
-            view?.ShowNodeActions(vm);
+            // 已经站在出口上（MazeNode_16 / node_16）：再点一次就是"点击出口"，
+            // 够四张拼图弹完整拼图窗口，不够则只回提示。
+            if (IsExitNode(vm, nodeId))
+                OpenExitPuzzle();
+            else
+                view?.ShowNodeActions(vm);
             return;
         }
 
@@ -108,7 +115,20 @@ public sealed class MazeMediator : IDisposable
             return;
         }
 
-        ApplyResult(commands?.Execute(new MoveToMazeNodeCommand(nodeId)));
+        CommandResult move = commands?.Execute(new MoveToMazeNodeCommand(nodeId));
+        ApplyResult(move);
+        // 首次走进出口也算"点击出口"，直接把出口流程带出来。
+        if (move != null && move.success && IsExitNode(currentViewModel, nodeId))
+            OpenExitPuzzle();
+    }
+
+    // 出口由配置里的 nodeType 决定，不依赖按钮序号，改表换出口时 UI 无需跟着改。
+    private static bool IsExitNode(MazeViewModel vm, string nodeId)
+    {
+        return vm != null
+            && !string.IsNullOrEmpty(nodeId)
+            && vm.nodeTypes.TryGetValue(nodeId, out string nodeType)
+            && nodeType == MazeNodeTypes.Exit;
     }
 
     public void CollectReward()
@@ -198,9 +218,14 @@ public sealed class MazeMediator : IDisposable
         ApplyResult(commands?.Execute(new EvacuateMazeRunCommand()));
     }
 
+    // 出口条件（集满四张拼图）由 MazeSystem 判定：成功才弹出完整拼图窗口，
+    // 失败时 ApplyResult 已经把"还差几张"的提示推给了视图。
     public void OpenExitPuzzle()
     {
-        ApplyResult(commands?.Execute(new OpenMazeExitPuzzleCommand()));
+        CommandResult result = commands?.Execute(new OpenMazeExitPuzzleCommand());
+        ApplyResult(result);
+        if (result != null && result.success)
+            view?.ShowExitPuzzle(currentViewModel);
     }
 
     public void AssembleExitPuzzle()
@@ -243,6 +268,7 @@ public sealed class MazeMediator : IDisposable
 
     private void OnMazeRunEnded(MazeRunResult result)
     {
+        view?.HideExitPuzzle();
         Refresh();
         if (result != null)
             view?.ShowResult(result);

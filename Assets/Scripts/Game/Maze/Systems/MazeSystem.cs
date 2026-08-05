@@ -8,6 +8,12 @@ public sealed class MazeSystem : ISystem
     private const string DefaultStartNodeId = "node_01";
     private const int TrapFailureEnergyCost = 10;
 
+    // 出口条件：拼图集满四张即可，不再要求凑齐指定的 fragmentId 组合。
+    private const int ExitRequiredFragmentCount = 4;
+
+    // 出口弹窗里"完整拼图"图片的占位资源键，美术接好图后按此键挂图即可。
+    public const string CompletePuzzleAssetKey = "maze_puzzle_complete";
+
     private readonly GameDatabase database;
     private readonly PlayerDatabase player;
     private readonly EventBus eventBus;
@@ -184,7 +190,7 @@ public sealed class MazeSystem : ISystem
             nodeId = run.currentNodeId;
         if (run.currentNodeId != nodeId)
             return Fail("You can only activate the current node.");
-        if (!TryGetNodeComponent(nodeId, out MazeNodeComponent node) || node.nodeType != "switch")
+        if (!TryGetNodeComponent(nodeId, out MazeNodeComponent node) || node.nodeType != MazeNodeTypes.Switch)
             return Fail("This node is not a switch.");
 
         run.activatedNodeIds.Add(nodeId);
@@ -369,8 +375,11 @@ public sealed class MazeSystem : ISystem
             return Fail("Maze run has not started.");
         if (run.state != MazeRunState.Running)
             return Fail("Maze run is not active.");
-        if (!IsCurrentNodeType(run, "exit"))
+        if (!IsCurrentNodeType(run, MazeNodeTypes.Exit))
             return Fail("You must reach the exit first.");
+        // 拼图没集满四张就点出口：只回失败提示，不打开完整拼图窗口。
+        if (!IsPerfectClear(run))
+            return Fail(BuildExitPuzzleMessage(run));
 
         run.exitPuzzleOpened = true;
         lastMessage = BuildExitPuzzleMessage(run);
@@ -384,7 +393,7 @@ public sealed class MazeSystem : ISystem
             return Fail("Maze run has not started.");
         if (run.state != MazeRunState.Running)
             return Fail("Maze run is not active.");
-        if (!IsCurrentNodeType(run, "exit"))
+        if (!IsCurrentNodeType(run, MazeNodeTypes.Exit))
             return Fail("You must reach the exit first.");
         if (!IsPerfectClear(run))
             return Fail(BuildExitPuzzleMessage(run));
@@ -400,7 +409,7 @@ public sealed class MazeSystem : ISystem
             return Fail("Maze run has not started.");
         if (run.state != MazeRunState.Running)
             return Fail("Maze run is not active.");
-        if (!IsCurrentNodeType(run, "exit"))
+        if (!IsCurrentNodeType(run, MazeNodeTypes.Exit))
             return Fail("You must reach the exit first.");
 
         run.exitPuzzleOpened = true;
@@ -422,7 +431,7 @@ public sealed class MazeSystem : ISystem
             return Fail("Maze run has not started.");
         if (run.state != MazeRunState.Running)
             return Fail("Maze run is not active.");
-        if (!IsCurrentNodeType(run, "evacuate"))
+        if (!IsCurrentNodeType(run, MazeNodeTypes.Evacuate))
             return Fail("You must reach an evacuation node first.");
 
         EndRun(MazeRunState.Evacuated, MazeRunEndReason.Evacuate);
@@ -455,7 +464,11 @@ public sealed class MazeSystem : ISystem
 
         // 测试期：解密房间不要求与当前节点相连，可从任意节点直达（见 MazeTestSettings）。
         bool isPuzzleRoom = targetNode.nodeType == MazeTestSettings.PuzzleRoomNodeType;
-        bool skipConnectivity = isPuzzleRoom && MazeTestSettings.directPuzzleRoomEntry;
+        // 出口只在"拼图已集满"之后才豁免连通性：解密房间可直达意味着玩家会站在
+        // puzzle_room 上凑齐四张拼图，而出口只与 node_15 相连，不放开就走不过去。
+        // 限定为已满足出口条件，避免开局就能从入口直接跳到出口跳过整座迷宫。
+        bool isExitShortcut = targetNode.nodeType == MazeNodeTypes.Exit && IsPerfectClear(run);
+        bool skipConnectivity = MazeTestSettings.directPuzzleRoomEntry && (isPuzzleRoom || isExitShortcut);
         if (!skipConnectivity && !currentNode.nextNodeIds.Contains(nodeId))
         {
             reason = "Node is not connected.";
@@ -484,18 +497,24 @@ public sealed class MazeSystem : ISystem
     }
 
     // 测试期：把四个解密房间补进可达列表，让迷宫地图上的按钮直接亮起来。
+    // 拼图集满后再把出口一并放开，否则玩家站在解密房间里点出口会被判"未连通"。
     // 关掉 MazeTestSettings.directPuzzleRoomEntry 后此方法不产生任何影响。
     private void AppendDirectPuzzleRooms(MazeViewModel vm, MazeRunComponent run)
     {
         if (!MazeTestSettings.directPuzzleRoomEntry || run.state != MazeRunState.Running)
             return;
 
+        bool exitUnlocked = IsPerfectClear(run);
         foreach (MazeNodeData data in nodeData.Values)
         {
             if (data == null
-                || data.nodeType != MazeTestSettings.PuzzleRoomNodeType
                 || data.nodeId == run.currentNodeId
                 || vm.reachableNodeIds.Contains(data.nodeId))
+                continue;
+
+            bool isPuzzleRoom = data.nodeType == MazeTestSettings.PuzzleRoomNodeType;
+            bool isUnlockedExit = data.nodeType == MazeNodeTypes.Exit && exitUnlocked;
+            if (!isPuzzleRoom && !isUnlockedExit)
                 continue;
 
             vm.reachableNodeIds.Add(data.nodeId);
@@ -599,18 +618,21 @@ public sealed class MazeSystem : ISystem
             AppendDirectPuzzleRooms(vm, run);
 
             vm.canCollectReward = CanCollectReward(run, node.nodeId);
-            vm.canActivateSwitch = node.nodeType == "switch" && !run.activatedNodeIds.Contains(node.nodeId);
+            vm.canActivateSwitch = node.nodeType == MazeNodeTypes.Switch && !run.activatedNodeIds.Contains(node.nodeId);
             vm.canSubmitPuzzle = !string.IsNullOrEmpty(node.puzzleId) && !run.solvedPuzzleIds.Contains(node.puzzleId);
             vm.canStartTrap = !string.IsNullOrEmpty(node.trapId) && !run.resolvedTrapIds.Contains(node.trapId) && !run.trapActive;
             vm.canResolveTrap = !string.IsNullOrEmpty(node.trapId) && !run.resolvedTrapIds.Contains(node.trapId);
             vm.canResolveTrapSuccess = vm.canResolveTrap;
             vm.canResolveTrapFailure = vm.canResolveTrap;
-            vm.canEvacuate = node.nodeType == "evacuate" && run.state == MazeRunState.Running;
-            vm.canFinish = node.nodeType == "exit" && run.state == MazeRunState.Running;
-            vm.canOpenExitPuzzle = vm.canFinish;
+            vm.canEvacuate = node.nodeType == MazeNodeTypes.Evacuate && run.state == MazeRunState.Running;
+            vm.canFinish = node.nodeType == MazeNodeTypes.Exit && run.state == MazeRunState.Running;
             vm.canAssemblePuzzle = vm.canFinish && IsPerfectClear(run);
+            // 出口窗口只在集满四张拼图时可开；没集满仍可原路离开。
+            vm.canOpenExitPuzzle = vm.canAssemblePuzzle;
             vm.canLeaveWithoutPerfect = vm.canFinish;
-            vm.exitPuzzleMessage = node.nodeType == "exit" ? BuildExitPuzzleMessage(run) : string.Empty;
+            vm.exitPuzzleOpened = run.exitPuzzleOpened && vm.canFinish;
+            vm.completePuzzleAssetKey = CompletePuzzleAssetKey;
+            vm.exitPuzzleMessage = node.nodeType == MazeNodeTypes.Exit ? BuildExitPuzzleMessage(run) : string.Empty;
             if (!string.IsNullOrEmpty(node.trapId) && TryGetTrapComponent(node.trapId, out MazeTrapComponent trap))
                 vm.trapGuideNodeId = trap.guideNodeId;
             if (!string.IsNullOrEmpty(node.puzzleId) && TryGetPuzzleComponent(node.puzzleId, out MazePuzzleComponent puzzle))
@@ -925,17 +947,19 @@ public sealed class MazeSystem : ISystem
         return rule.perfectBlueprintId;
     }
 
+    // 出口条件只看"手上有几张拼图"：集满四张即通过，与具体是哪四张无关。
+    // 配置里少于四张拼图时（例如测试用的精简配置），退化为"收齐配置里的全部拼图"。
     private bool IsPerfectClear(MazeRunComponent run)
     {
-        List<string> required = GetRequiredFragmentIds();
-        if (required.Count == 0)
-            return true;
-        for (int i = 0; i < required.Count; i++)
-        {
-            if (!run.collectedFragments.Contains(required[i]))
-                return false;
-        }
-        return true;
+        return run.collectedFragments.Count >= GetRequiredFragmentCount();
+    }
+
+    private int GetRequiredFragmentCount()
+    {
+        int configured = GetRequiredFragmentIds().Count;
+        if (configured <= 0)
+            return 0;
+        return Mathf.Min(ExitRequiredFragmentCount, configured);
     }
 
     private List<string> GetRequiredFragmentIds()
@@ -958,24 +982,18 @@ public sealed class MazeSystem : ISystem
 
     private void FillFragmentProgress(MazeViewModel vm, MazeRunComponent run)
     {
-        List<string> required = GetRequiredFragmentIds();
-        vm.totalFragmentCount = required.Count;
+        int required = GetRequiredFragmentCount();
+        vm.totalFragmentCount = required;
         if (run == null)
         {
             vm.fragmentCount = 0;
-            vm.perfectProgress = required.Count == 0 ? 1f : 0f;
-            vm.perfectMissingPercent = required.Count == 0 ? 0 : 100;
+            vm.perfectProgress = required == 0 ? 1f : 0f;
+            vm.perfectMissingPercent = required == 0 ? 0 : 100;
             return;
         }
 
-        int collected = 0;
-        for (int i = 0; i < required.Count; i++)
-        {
-            if (run.collectedFragments.Contains(required[i]))
-                collected++;
-        }
-        vm.fragmentCount = collected;
-        vm.perfectProgress = required.Count == 0 ? 1f : Mathf.Clamp01((float)collected / required.Count);
+        vm.fragmentCount = run.collectedFragments.Count;
+        vm.perfectProgress = GetPerfectProgress(run);
         vm.perfectMissingPercent = Mathf.Clamp(Mathf.CeilToInt((1f - vm.perfectProgress) * 100f), 0, 100);
     }
 
@@ -1004,27 +1022,23 @@ public sealed class MazeSystem : ISystem
 
     private string BuildExitPuzzleMessage(MazeRunComponent run)
     {
+        int required = GetRequiredFragmentCount();
         if (IsPerfectClear(run))
-            return "All puzzle fragments are collected. Assemble the exit puzzle for double rewards.";
-        int missing = Mathf.Clamp(Mathf.CeilToInt((1f - GetPerfectProgress(run)) * 100f), 0, 100);
+            return "拼图已集齐 " + required + "/" + required + "，可以拼合出口拼图并完美通关。";
+
+        int missing = Mathf.Max(0, required - run.collectedFragments.Count);
         string suffix = run.collectedFragments.Count > 0
-            ? " Leaving now will lose one puzzle fragment."
+            ? "现在离开会失去一张拼图。"
             : string.Empty;
-        return "You are " + missing + "% away from perfect clear. Perfect clear grants double rewards." + suffix;
+        return "还差 " + missing + " 张拼图才能开启出口。完美通关可获得双倍奖励。" + suffix;
     }
 
     private float GetPerfectProgress(MazeRunComponent run)
     {
-        List<string> required = GetRequiredFragmentIds();
-        if (required.Count == 0)
+        int required = GetRequiredFragmentCount();
+        if (required <= 0)
             return 1f;
-        int collected = 0;
-        for (int i = 0; i < required.Count; i++)
-        {
-            if (run.collectedFragments.Contains(required[i]))
-                collected++;
-        }
-        return Mathf.Clamp01((float)collected / required.Count);
+        return Mathf.Clamp01((float)run.collectedFragments.Count / required);
     }
 
     private string BuildTrapPrompt(MazeNodeComponent node, MazeTrapComponent trap)
@@ -1092,6 +1106,7 @@ public sealed class MazeSystem : ISystem
                 continue;
             vm.nodeTitles[node.nodeId] = string.IsNullOrEmpty(node.title) ? node.nodeId : node.title;
             vm.nodeIndices[node.nodeId] = node.index;
+            vm.nodeTypes[node.nodeId] = node.nodeType;
         }
     }
 

@@ -36,6 +36,18 @@ public sealed class MazeVerticalSliceTests
         {
         }
 
+        public int exitPuzzleShownCount;
+
+        public void ShowExitPuzzle(MazeViewModel viewModel)
+        {
+            lastViewModel = viewModel;
+            exitPuzzleShownCount++;
+        }
+
+        public void HideExitPuzzle()
+        {
+        }
+
         public void ShowMessage(string message)
         {
             lastMessage = message;
@@ -273,7 +285,8 @@ public sealed class MazeVerticalSliceTests
         CommandResult normal = normalFixture.system.LeaveWithoutPerfect();
         MazeRunResult normalResult = normal.payload as MazeRunResult;
 
-        Assert.IsTrue(open.success);
+        // 拼图没集满时点出口不再打开窗口，只回提示；离开的路仍然通。
+        Assert.IsFalse(open.success);
         Assert.IsTrue(normal.success);
         Assert.IsNotNull(normalResult);
         Assert.AreEqual(MazeRunEndReason.Clear, normalResult.endReason);
@@ -422,6 +435,148 @@ public sealed class MazeVerticalSliceTests
         framework.Dispose();
     }
     [Test]
+    public void MazeExitOpensOnceFourFragmentsAreCollected()
+    {
+        // 四个解密房间 node_02..node_05 顺次相连，node_06 是出口。
+        MazeFixture fixture = CreateFourFragmentFixture();
+        fixture.system.StartRun(fixture.player.playerId, "default", "node_01");
+
+        // 只解开前三关，拼图停在 3/4。
+        for (int i = 1; i <= 3; i++)
+        {
+            Assert.IsTrue(fixture.system.MoveToNode("node_0" + (i + 1)).success);
+            Assert.IsTrue(fixture.system
+                .ResolvePuzzleEvaluation("puzzle_0" + i, MazePuzzleEvaluation.Correct("ok"))
+                .success);
+        }
+
+        Assert.IsTrue(fixture.system.MoveToNode("node_05").success);
+        Assert.IsTrue(fixture.system.MoveToNode("node_06").success);
+
+        MazeViewModel threeVm = fixture.system.GetViewModel();
+        CommandResult openWithThree = fixture.system.OpenExitPuzzle();
+
+        Assert.AreEqual(3, threeVm.fragmentCount);
+        Assert.AreEqual(4, threeVm.totalFragmentCount);
+        Assert.IsTrue(threeVm.canFinish);
+        Assert.IsFalse(threeVm.canOpenExitPuzzle);
+        Assert.IsFalse(threeVm.canAssemblePuzzle);
+        Assert.IsTrue(threeVm.canLeaveWithoutPerfect);
+        Assert.IsFalse(openWithThree.success);
+
+        // 回到第四个解密房间补上最后一张，再走回出口。
+        MazeFixture full = CreateFourFragmentFixture();
+        full.system.StartRun(full.player.playerId, "default", "node_01");
+        for (int i = 1; i <= 4; i++)
+        {
+            Assert.IsTrue(full.system.MoveToNode("node_0" + (i + 1)).success);
+            Assert.IsTrue(full.system
+                .ResolvePuzzleEvaluation("puzzle_0" + i, MazePuzzleEvaluation.Correct("ok"))
+                .success);
+        }
+        Assert.IsTrue(full.system.MoveToNode("node_06").success);
+
+        MazeViewModel fourVm = full.system.GetViewModel();
+        CommandResult openWithFour = full.system.OpenExitPuzzle();
+        MazeViewModel openedVm = openWithFour.payload as MazeViewModel;
+
+        Assert.AreEqual(4, fourVm.fragmentCount);
+        Assert.IsTrue(fourVm.canOpenExitPuzzle);
+        Assert.IsTrue(fourVm.canAssemblePuzzle);
+        Assert.IsTrue(openWithFour.success);
+        Assert.IsNotNull(openedVm);
+        Assert.IsTrue(openedVm.exitPuzzleOpened);
+        Assert.IsFalse(string.IsNullOrEmpty(openedVm.completePuzzleAssetKey));
+
+        CommandResult assembled = full.system.AssembleExitPuzzle();
+        MazeRunResult result = assembled.payload as MazeRunResult;
+
+        Assert.IsTrue(assembled.success);
+        Assert.IsNotNull(result);
+        Assert.IsTrue(result.perfectClear);
+        Assert.AreEqual(MazeRunEndReason.PerfectClear, result.endReason);
+    }
+
+    // 出口按钮 MazeNode_16 的绑定：index 16 → node_16 → nodeType "exit"。
+    // UI 只按序号发 OnNodeClicked，能否走出口流程完全取决于这条链。
+    // 回归：测试期开着解密房间直达时，玩家会站在 puzzle_room 上集齐四张拼图。
+    // 出口 node_16 只与 node_15 相连，若不一并豁免，点出口会被判"未连通"。
+    [Test]
+    public void ExitIsReachableFromPuzzleRoomWhenDirectEntryEnabled()
+    {
+        bool original = MazeTestSettings.directPuzzleRoomEntry;
+        try
+        {
+            MazeTestSettings.directPuzzleRoomEntry = true;
+
+            GameDatabase database = GameDatabase.GetInstance();
+            database.Init();
+            PlayerDatabase player = CreatePlayer("player_exit_reach", 500);
+            database.playerDatabases[player.playerId] = player;
+            EventBus events = new EventBus();
+            EcsWorld world = new EcsWorld();
+            MazeSystem system = new MazeSystem(database, player, events);
+            world.RegisterSystem(system);
+            world.Init();
+
+            system.StartRun(player.playerId, "default", "node_01");
+
+            // 拼图没集满前，出口不得放开：否则开局就能从入口直接跳到出口跳过整座迷宫。
+            MazeViewModel atStart = system.GetViewModel();
+            Assert.IsFalse(atStart.reachableNodeIds.Contains("node_16"));
+            Assert.IsFalse(system.CanMoveToNode("node_16", out _));
+
+            // 直达四个解密房间并全部解开，模拟玩家实际的测试期走法。
+            string[] puzzleNodes = { "node_05", "node_06", "node_11", "node_12" };
+            string[] puzzleIds = { "puzzle_01", "puzzle_02", "puzzle_03", "puzzle_04" };
+            for (int i = 0; i < puzzleNodes.Length; i++)
+            {
+                Assert.IsTrue(system.MoveToNode(puzzleNodes[i]).success, puzzleNodes[i]);
+                system.ResolvePuzzleEvaluation(puzzleIds[i], MazePuzzleEvaluation.Correct("ok"));
+            }
+
+            MazeViewModel atPuzzle = system.GetViewModel();
+            Assert.AreEqual(4, atPuzzle.fragmentCount);
+            Assert.AreEqual("node_12", atPuzzle.currentNodeId);
+            // 关键断言：站在解密房间时，出口必须出现在可达列表里。
+            Assert.Contains("node_16", atPuzzle.reachableNodeIds);
+
+            Assert.IsTrue(system.CanMoveToNode("node_16", out string reason), reason);
+            Assert.IsTrue(system.MoveToNode("node_16").success);
+
+            MazeViewModel atExit = system.GetViewModel();
+            Assert.IsTrue(atExit.canOpenExitPuzzle);
+            Assert.IsTrue(system.OpenExitPuzzle().success);
+
+            world.Dispose();
+        }
+        finally
+        {
+            MazeTestSettings.directPuzzleRoomEntry = original;
+        }
+    }
+
+    [Test]
+    public void ExitNodeButtonIndexResolvesToExitNodeAndOpensExitFlow()
+    {
+        MazeFixture fixture = CreateFourFragmentFixture();
+        fixture.system.StartRun(fixture.player.playerId, "default", "node_01");
+
+        MazeViewModel vm = fixture.system.GetViewModel();
+        Assert.IsTrue(fixture.system.TryGetNodeIdByIndex(6, out string exitNodeId));
+        Assert.AreEqual("node_06", exitNodeId);
+        Assert.AreEqual(MazeNodeTypes.Exit, vm.nodeTypes[exitNodeId]);
+
+        // 真实配置：16 号按钮对应的必须是 exit 节点。
+        GameDatabase realDatabase = GameDatabase.GetInstance();
+        realDatabase.Init();
+        MazeNodeData realExit = realDatabase.Get<MazeNodeData>("maze_nodes", "node_16");
+        Assert.IsNotNull(realExit);
+        Assert.AreEqual(16, realExit.index);
+        Assert.AreEqual(MazeNodeTypes.Exit, realExit.nodeType);
+    }
+
+    [Test]
     public void MazeMediatorNodeAndActionClicksDispatchCommandsOnly()
     {
         FrameworkContext framework = new FrameworkContext();
@@ -481,6 +636,91 @@ public sealed class MazeVerticalSliceTests
     {
         PlayerDatabase player = CreatePlayer("player_test", 100);
         GameDatabase database = CreateMazeDatabase(player);
+        EventBus events = new EventBus();
+        EcsWorld world = new EcsWorld();
+        MazeSystem system = new MazeSystem(database, player, events);
+        world.RegisterSystem(system);
+        world.Init();
+
+        return new MazeFixture
+        {
+            database = database,
+            player = player,
+            events = events,
+            world = world,
+            system = system
+        };
+    }
+
+    // 四张拼图的最小配置：一条直线 entrance → 4 个解密房 → exit，用来验出口的数量判定。
+    private static MazeFixture CreateFourFragmentFixture()
+    {
+        PlayerDatabase player = CreatePlayer("player_fragments", 500);
+        GameDatabase database = new GameDatabase();
+        database.playerDatabases[player.playerId] = player;
+
+        Dictionary<string, BaseData> nodes = new Dictionary<string, BaseData>
+        {
+            { "node_01", Node("node_01", 1, "entrance", new[] { "node_02" }) }
+        };
+        Dictionary<string, BaseData> puzzles = new Dictionary<string, BaseData>();
+        Dictionary<string, BaseData> fragments = new Dictionary<string, BaseData>();
+
+        for (int i = 1; i <= 4; i++)
+        {
+            string nodeId = "node_0" + (i + 1);
+            string nextId = "node_0" + (i + 2);
+            string puzzleId = "puzzle_0" + i;
+            string fragmentId = "fragment_0" + i;
+
+            nodes[nodeId] = Node(nodeId, i + 1, "puzzle_room", new[] { nextId }, puzzleId: puzzleId);
+            puzzles[puzzleId] = new MazePuzzleData
+            {
+                puzzleId = puzzleId,
+                puzzleType = "item_socket",
+                answer = "answer_key",
+                hintText = "puzzle " + i,
+                optionKeys = new List<string> { "answer_key", "wrong" },
+                failEnergyCost = 1,
+                successRewardItems = new Dictionary<string, int>(),
+                fragmentId = fragmentId,
+                fragmentText = "fragment " + i
+            };
+            fragments[fragmentId] = new MazeFragmentData
+            {
+                fragmentId = fragmentId,
+                order = i,
+                displayText = "fragment " + i,
+                assetKey = "fragment_asset_" + i
+            };
+        }
+        nodes["node_06"] = Node("node_06", 6, "exit", new string[0]);
+
+        database.databases["maze_nodes"] = nodes;
+        database.databases["maze_puzzles"] = puzzles;
+        database.databases["maze_fragments"] = fragments;
+        database.databases["maze_traps"] = new Dictionary<string, BaseData>();
+        database.databases["foods"] = new Dictionary<string, BaseData>();
+        database.databases["maze_rules"] = new Dictionary<string, BaseData>
+        {
+            {
+                "default",
+                new MazeRuleData
+                {
+                    ruleId = "default",
+                    beginRunEnergyCost = 1,
+                    enterRoomEnergyCost = 1,
+                    timedEnergyCost = 0,
+                    timedEnergySeconds = 0,
+                    evacuateMultiplier = 0.5f,
+                    failMultiplier = 0.3f,
+                    clearMultiplier = 1f,
+                    perfectMultiplier = 2f,
+                    perfectBlueprintId = "blueprint_maze_energy"
+                }
+            }
+        };
+
         EventBus events = new EventBus();
         EcsWorld world = new EcsWorld();
         MazeSystem system = new MazeSystem(database, player, events);

@@ -53,6 +53,10 @@ MonoBehaviour:
     m_Address: Assets/UI/Prefabs/MazePuzzleRockWordUI.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
+  - m_GUID: 14ec22ced8a1d104593cdf72e84e5899
+    m_Address: maze_puzzle_complete
+    m_ReadOnly: 0
+    m_SerializedLabels: []
   m_ReadOnly: 0
   m_Settings: {fileID: 11400000, guid: 60e1d9d016269dc43a47a912b66da943, type: 2}
   m_SchemaSet:

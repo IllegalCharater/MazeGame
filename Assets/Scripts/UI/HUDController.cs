@@ -78,6 +78,7 @@ public sealed class HUDController : BaseUIController
         UpdateCurrency(profile.currency);
         UpdateEnergy(profile.energy, profile.maxEnergy);
         UpdateStateHint(GameManager.Instance.CurrentState);
+        ApplyVisibility(GameManager.Instance.CurrentState);
     }
 
     private void UpdateProfile(PlayerProfile profile)
@@ -106,6 +107,16 @@ public sealed class HUDController : BaseUIController
     private void OnGameStateChanged(GameState from, GameState to)
     {
         UpdateStateHint(to);
+        ApplyVisibility(to);
+    }
+
+    // 迷宫场景内隐藏 HUD：迷宫界面自带状态栏，两者叠在 TopLayer 上会互相遮挡。
+    // 放在这里而不是只靠 SceneFlowManager，是因为 HUD 是异步加载的，
+    // 可能在切场景之后才实例化，那时就得自己把状态补上。
+    private void ApplyVisibility(GameState state)
+    {
+        if (root != null)
+            root.SetActive(state != GameState.InMaze);
     }
 
     private void UpdateStateHint(GameState state)

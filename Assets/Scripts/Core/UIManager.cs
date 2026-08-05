@@ -87,6 +87,23 @@ public class UIManager
         GetInstance().CloseOpenedView(viewName);
     }
 
+    /// <summary>
+    /// 只隐藏界面，不销毁也不释放 Prefab 句柄。用于迷宫这类"临时收起 HUD、出来还要还原"的场景。
+    /// </summary>
+    public static void SetViewVisible(string viewName, bool visible)
+    {
+        BaseUIController view = GetInstance().GetOpenedView(viewName);
+        if (view == null || view.root == null)
+            return;
+
+        view.root.SetActive(visible);
+        if (visible)
+        {
+            view.root.transform.SetAsLastSibling();
+            view.OnRefresh();
+        }
+    }
+
     public static void CloseAll()
     {
         GetInstance().CloseAllViews();

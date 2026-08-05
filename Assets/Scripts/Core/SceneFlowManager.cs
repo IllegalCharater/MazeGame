@@ -42,19 +42,29 @@ public sealed class SceneFlowManager
     public void GoToMain()
     {
         LoadScene(GameState.MainMenu);
+        SetHudVisible(true);
         UIManager.GotoView("MainMenuUI");
     }
 
     public void GoToMaze()
     {
         LoadScene(GameState.InMaze);
+        // 迷宫内自己有一套状态栏（体力/战利品/拼图），HUD 会与之重叠，进场先收起来。
+        SetHudVisible(false);
         UIManager.GotoView("MazeUI");
     }
 
     public void GoToShop()
     {
         LoadScene(GameState.MainMenu);
+        SetHudVisible(true);
         UIManager.GotoView("ShopUI");
+    }
+
+    // 只切显隐，不销毁：HUD 常驻 TopLayer，重开成本远高于 SetActive。
+    private static void SetHudVisible(bool visible)
+    {
+        UIManager.SetViewVisible("HUD", visible);
     }
 
     private bool isInited = false;

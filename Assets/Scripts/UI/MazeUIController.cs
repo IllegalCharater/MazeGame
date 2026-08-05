@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Text;
 using UnityEngine;
+using UnityEngine.AddressableAssets;
+using UnityEngine.ResourceManagement.AsyncOperations;
 using UnityEngine.UI;
 
 public sealed class MazeUIController : BaseUIController, IMazeView
@@ -24,9 +26,20 @@ public sealed class MazeUIController : BaseUIController, IMazeView
     private Text nodeActionSecondaryButtonText;
     private Text resultTitleText;
     private Text resultBodyText;
+    private Text exitPuzzleTitleText;
+    private Text exitPuzzleBodyText;
 
     private GameObject nodeActionPanel;
     private GameObject resultPanel;
+    private GameObject exitPuzzlePanel;
+    private Image exitPuzzleImage;
+
+    // 完整拼图图片按 Addressables 键异步加载，handle 留着在 Dismiss 时释放。
+    private AsyncOperationHandle<Sprite> completePuzzleHandle;
+    private string completePuzzleRequestedKey;
+
+    private Button exitPuzzleConfirmButton;
+    private Button exitPuzzleCloseButton;
 
     private Button rewardGameplayButton;
     private Button switchGameplayButton;
@@ -70,6 +83,7 @@ public sealed class MazeUIController : BaseUIController, IMazeView
     {
         mediator?.Dispose();
         mediator = null;
+        ReleaseCompletePuzzleSprite();
         base.Dismiss();
     }
 
@@ -87,6 +101,12 @@ public sealed class MazeUIController : BaseUIController, IMazeView
 
         if (nodeActionPanel != null && nodeActionPanel.activeSelf)
             RenderNodeActionPanel(lastViewModel);
+
+        // 局内结束后出口窗口没有意义，直接收掉；否则跟随最新数据重绘。
+        if (lastViewModel.isEnded)
+            HideExitPuzzle();
+        else if (exitPuzzlePanel != null && exitPuzzlePanel.activeSelf)
+            RenderExitPuzzlePanel(lastViewModel);
     }
 
     public void ShowNodeActions(MazeViewModel viewModel)
@@ -101,6 +121,21 @@ public sealed class MazeUIController : BaseUIController, IMazeView
     {
         if (nodeActionPanel != null)
             nodeActionPanel.SetActive(false);
+    }
+
+    // 集满四张拼图后点击出口触发：展示完整拼图与确认按钮。
+    public void ShowExitPuzzle(MazeViewModel viewModel)
+    {
+        lastViewModel = viewModel ?? lastViewModel ?? CreateEmptyViewModel();
+        if (exitPuzzlePanel != null)
+            exitPuzzlePanel.SetActive(true);
+        RenderExitPuzzlePanel(lastViewModel);
+    }
+
+    public void HideExitPuzzle()
+    {
+        if (exitPuzzlePanel != null)
+            exitPuzzlePanel.SetActive(false);
     }
 
     public void ShowMessage(string message)
@@ -147,9 +182,17 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         nodeActionSecondaryButtonText = FindText("NodeActionSecondaryButtonText");
         resultTitleText = FindText("ResultTitleText");
         resultBodyText = FindText("ResultBodyText");
-
         nodeActionPanel = FindObject("NodeActionPanel");
         resultPanel = FindObject("ResultPanel");
+        exitPuzzlePanel = FindObject("ExitPuzzlePanel");
+        // 预制体里还没有出口窗口时，按同样的节点名在运行时补一个。
+        // 美术之后在 MazeUI.prefab 里做出 ExitPuzzlePanel，这里就会直接用预制体的版本。
+        if (exitPuzzlePanel == null)
+            exitPuzzlePanel = BuildExitPuzzlePanel();
+        // 完整拼图的图片位：sprite 在 RenderExitPuzzlePanel 里按 Addressables 键加载。
+        exitPuzzleImage = FindComponent<Image>("ExitPuzzleImage");
+        exitPuzzleTitleText = FindText("ExitPuzzleTitleText");
+        exitPuzzleBodyText = FindText("ExitPuzzleBodyText");
 
         rewardGameplayButton = FindButton("RewardGameplayButton");
         switchGameplayButton = FindButton("SwitchGameplayButton");
@@ -163,11 +206,15 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         nodeActionPrimaryButton = FindButton("NodeActionPrimaryButton");
         nodeActionSecondaryButton = FindButton("NodeActionSecondaryButton");
         nodeActionCloseButton = FindButton("NodeActionCloseButton");
+        exitPuzzleConfirmButton = FindButton("ExitPuzzleConfirmButton");
+        exitPuzzleCloseButton = FindButton("ExitPuzzleCloseButton");
 
         if (nodeActionPanel != null)
             nodeActionPanel.SetActive(false);
         if (resultPanel != null)
             resultPanel.SetActive(false);
+        if (exitPuzzlePanel != null)
+            exitPuzzlePanel.SetActive(false);
     }
 
     private void WireNodeButtons()
@@ -191,6 +238,12 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         BindClickEvent(perfectExitButton, () => mediator?.AssembleExitPuzzle());
         BindClickEvent(returnToShopButton, () => mediator?.ReturnToShop());
         BindClickEvent(nodeActionCloseButton, HideNodeActions);
+        BindClickEvent(exitPuzzleConfirmButton, () =>
+        {
+            HideExitPuzzle();
+            mediator?.AssembleExitPuzzle();
+        });
+        BindClickEvent(exitPuzzleCloseButton, HideExitPuzzle);
     }
 
     private void CreateMediator()
@@ -290,6 +343,192 @@ public sealed class MazeUIController : BaseUIController, IMazeView
         SetButtonState(evacuateButton, running && vm.canEvacuate);
         SetButtonState(perfectExitButton, running && vm.canAssemblePuzzle);
         SetButtonState(returnToShopButton, true);
+    }
+
+    // 运行时兜底搭出口窗口。层级与命名跟预制体约定保持一致，
+    // 这样 FindObject/FindText 那套查找逻辑对两种来源都成立。
+    private GameObject BuildExitPuzzlePanel()
+    {
+        if (root == null)
+            return null;
+
+        GameObject panel = CreateUINode("ExitPuzzlePanel", root.transform);
+        RectTransform panelRect = panel.GetComponent<RectTransform>();
+        panelRect.anchorMin = new Vector2(0.5f, 0.5f);
+        panelRect.anchorMax = new Vector2(0.5f, 0.5f);
+        panelRect.pivot = new Vector2(0.5f, 0.5f);
+        panelRect.anchoredPosition = Vector2.zero;
+        panelRect.sizeDelta = new Vector2(620f, 720f);
+        Image bg = panel.AddComponent<Image>();
+        bg.color = new Color(0.025f, 0.045f, 0.07f, 0.96f);
+        bg.raycastTarget = true;
+
+        exitPuzzleTitleText = CreateLabel("ExitPuzzleTitleText", panel.transform,
+            new Vector2(0f, -46f), new Vector2(560f, 48f), 30, FontStyle.Bold);
+
+        // 完整拼图占位：正方形，居中偏上，给美术留出最大可用面积。
+        GameObject imageNode = CreateUINode("ExitPuzzleImage", panel.transform);
+        RectTransform imageRect = imageNode.GetComponent<RectTransform>();
+        imageRect.anchorMin = new Vector2(0.5f, 1f);
+        imageRect.anchorMax = new Vector2(0.5f, 1f);
+        imageRect.pivot = new Vector2(0.5f, 1f);
+        imageRect.anchoredPosition = new Vector2(0f, -84f);
+        imageRect.sizeDelta = new Vector2(420f, 420f);
+        Image placeholder = imageNode.AddComponent<Image>();
+        placeholder.color = new Color(0.75f, 0.75f, 0.78f, 1f);
+        placeholder.raycastTarget = false;
+
+        exitPuzzleBodyText = CreateLabel("ExitPuzzleBodyText", panel.transform,
+            new Vector2(0f, -540f), new Vector2(540f, 100f), 22, FontStyle.Normal);
+
+        CreateButton("ExitPuzzleConfirmButton", panel.transform, "拼合拼图",
+            new Vector2(-130f, 56f), new Vector2(220f, 64f));
+        CreateButton("ExitPuzzleCloseButton", panel.transform, "稍后再说",
+            new Vector2(130f, 56f), new Vector2(220f, 64f));
+
+        panel.SetActive(false);
+        return panel;
+    }
+
+    private static GameObject CreateUINode(string name, Transform parent)
+    {
+        GameObject node = new GameObject(name, typeof(RectTransform));
+        node.layer = parent.gameObject.layer;
+        node.transform.SetParent(parent, false);
+        return node;
+    }
+
+    private static Text CreateLabel(string name, Transform parent, Vector2 position, Vector2 size,
+        int fontSize, FontStyle style)
+    {
+        GameObject node = CreateUINode(name, parent);
+        RectTransform rect = node.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 1f);
+        rect.anchorMax = new Vector2(0.5f, 1f);
+        rect.pivot = new Vector2(0.5f, 1f);
+        rect.anchoredPosition = position;
+        rect.sizeDelta = size;
+
+        Text text = node.AddComponent<Text>();
+        text.font = Resources.GetBuiltinResource<Font>("Arial.ttf");
+        text.fontSize = fontSize;
+        text.fontStyle = style;
+        text.alignment = TextAnchor.UpperCenter;
+        text.horizontalOverflow = HorizontalWrapMode.Wrap;
+        text.verticalOverflow = VerticalWrapMode.Overflow;
+        text.color = new Color(0.94f, 0.92f, 0.86f, 1f);
+        text.raycastTarget = false;
+        return text;
+    }
+
+    private static void CreateButton(string name, Transform parent, string label,
+        Vector2 position, Vector2 size)
+    {
+        GameObject node = CreateUINode(name, parent);
+        RectTransform rect = node.GetComponent<RectTransform>();
+        rect.anchorMin = new Vector2(0.5f, 0f);
+        rect.anchorMax = new Vector2(0.5f, 0f);
+        rect.pivot = new Vector2(0.5f, 0f);
+        rect.anchoredPosition = position;
+        rect.sizeDelta = size;
+
+        Image bg = node.AddComponent<Image>();
+        bg.color = new Color(0.18f, 0.28f, 0.42f, 1f);
+        Button button = node.AddComponent<Button>();
+        button.targetGraphic = bg;
+
+        Text text = CreateLabel(name + "Text", node.transform, Vector2.zero, size, 24, FontStyle.Bold);
+        RectTransform textRect = text.rectTransform;
+        textRect.anchorMin = Vector2.zero;
+        textRect.anchorMax = Vector2.one;
+        textRect.offsetMin = Vector2.zero;
+        textRect.offsetMax = Vector2.zero;
+        text.alignment = TextAnchor.MiddleCenter;
+        text.text = label;
+    }
+
+    private void RenderExitPuzzlePanel(MazeViewModel vm)
+    {
+        UIHelper.SetText(exitPuzzleTitleText, "出口 · 完整拼图");
+
+        StringBuilder sb = new StringBuilder();
+        sb.Append("拼图已集齐 ");
+        sb.Append(vm.fragmentCount);
+        sb.Append("/");
+        sb.AppendLine(vm.totalFragmentCount.ToString());
+        if (!string.IsNullOrEmpty(vm.exitPuzzleMessage))
+            sb.AppendLine(vm.exitPuzzleMessage);
+        if (vm.fragments.Count > 0)
+            sb.AppendLine(string.Join("、", vm.fragments));
+        UIHelper.SetText(exitPuzzleBodyText, sb.ToString());
+
+        RequestCompletePuzzleSprite(vm.completePuzzleAssetKey);
+        ApplyCompletePuzzleTint();
+
+        SetButtonState(exitPuzzleConfirmButton, vm.canAssemblePuzzle);
+    }
+
+    // 按 MazeViewModel 给的资源键取完整拼图。同一个键只加载一次，
+    // 加载失败时不动 sprite，占位浅灰底继续兜底。
+    private void RequestCompletePuzzleSprite(string assetKey)
+    {
+        if (exitPuzzleImage == null || string.IsNullOrEmpty(assetKey))
+            return;
+        // 预制体里已经挂好图的情况：不再走 Addressables，尊重美术的配置。
+        if (completePuzzleRequestedKey == null && exitPuzzleImage.sprite != null)
+        {
+            completePuzzleRequestedKey = assetKey;
+            return;
+        }
+        if (completePuzzleRequestedKey == assetKey)
+            return;
+
+        ReleaseCompletePuzzleSprite();
+        completePuzzleRequestedKey = assetKey;
+        completePuzzleHandle = Addressables.LoadAssetAsync<Sprite>(assetKey);
+        completePuzzleHandle.Completed += OnCompletePuzzleSpriteLoaded;
+    }
+
+    private void OnCompletePuzzleSpriteLoaded(AsyncOperationHandle<Sprite> handle)
+    {
+        if (handle.Status != AsyncOperationStatus.Succeeded || handle.Result == null)
+        {
+            Debug.LogWarning("[MazeUI] 完整拼图图片加载失败，保留占位底色: " + completePuzzleRequestedKey);
+            return;
+        }
+
+        // 加载期间窗口可能已经关掉：Image 没了就把 handle 收回去。
+        if (exitPuzzleImage == null)
+        {
+            ReleaseCompletePuzzleSprite();
+            return;
+        }
+
+        exitPuzzleImage.sprite = handle.Result;
+        exitPuzzleImage.preserveAspect = true;
+        ApplyCompletePuzzleTint();
+    }
+
+    // Image.color 是乘在图上的，挂上 sprite 后必须转白，否则浅灰占位色会把图压暗。
+    private void ApplyCompletePuzzleTint()
+    {
+        if (exitPuzzleImage == null)
+            return;
+
+        exitPuzzleImage.color = exitPuzzleImage.sprite != null
+            ? Color.white
+            : new Color(0.75f, 0.75f, 0.78f, 1f);
+    }
+
+    private void ReleaseCompletePuzzleSprite()
+    {
+        completePuzzleRequestedKey = null;
+        if (!completePuzzleHandle.IsValid())
+            return;
+
+        completePuzzleHandle.Completed -= OnCompletePuzzleSpriteLoaded;
+        Addressables.Release(completePuzzleHandle);
+        completePuzzleHandle = default;
     }
 
     private void RenderNodeActionPanel(MazeViewModel vm)

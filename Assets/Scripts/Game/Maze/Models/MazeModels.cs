@@ -110,6 +110,9 @@ public sealed class MazeViewModel
     public List<string> lostFragments = new List<string>();
     public Dictionary<string, string> nodeTitles = new Dictionary<string, string>();
     public Dictionary<string, int> nodeIndices = new Dictionary<string, int>();
+    // 每个节点的类型（exit / evacuate / puzzle_room ...），让 UI 能按类型识别节点，
+    // 而不必把"第几号按钮是出口"写死在界面里。
+    public Dictionary<string, string> nodeTypes = new Dictionary<string, string>();
     public Dictionary<string, int> availableFoods = new Dictionary<string, int>();
     public bool canCollectReward;
     public bool canActivateSwitch;
@@ -124,6 +127,10 @@ public sealed class MazeViewModel
     public bool canAssemblePuzzle;
     public bool canLeaveWithoutPerfect;
     public bool canUseFood;
+    // 出口提示窗口是否已打开（集满四张拼图后点出口才会置真）。
+    public bool exitPuzzleOpened;
+    // 出口窗口里"完整拼图"的图片资源键，UI 侧按此键取图，暂时为占位。
+    public string completePuzzleAssetKey;
     public bool trapActive;
     public string activeTrapId;
     public string trapMessage;
