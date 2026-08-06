@@ -1024,13 +1024,10 @@ public sealed class MazeSystem : ISystem
     {
         int required = GetRequiredFragmentCount();
         if (IsPerfectClear(run))
-            return "拼图已集齐 " + required + "/" + required + "，可以拼合出口拼图并完美通关。";
+            return "拼图已集齐 ";
 
         int missing = Mathf.Max(0, required - run.collectedFragments.Count);
-        string suffix = run.collectedFragments.Count > 0
-            ? "现在离开会失去一张拼图。"
-            : string.Empty;
-        return "还差 " + missing + " 张拼图才能开启出口。完美通关可获得双倍奖励。" + suffix;
+        return "还差 " + missing + " 张拼图才能开启出口";
     }
 
     private float GetPerfectProgress(MazeRunComponent run)

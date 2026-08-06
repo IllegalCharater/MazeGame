@@ -449,17 +449,17 @@ public sealed class MazeUIController : BaseUIController, IMazeView
 
     private void RenderExitPuzzlePanel(MazeViewModel vm)
     {
-        UIHelper.SetText(exitPuzzleTitleText, "出口 · 完整拼图");
+        UIHelper.SetText(exitPuzzleTitleText, "出口");
 
         StringBuilder sb = new StringBuilder();
-        sb.Append("拼图已集齐 ");
-        sb.Append(vm.fragmentCount);
-        sb.Append("/");
-        sb.AppendLine(vm.totalFragmentCount.ToString());
+        // sb.Append("拼图已集齐 ");
+        // sb.Append(vm.fragmentCount);
+        // sb.Append("/");
+        // sb.AppendLine(vm.totalFragmentCount.ToString());
         if (!string.IsNullOrEmpty(vm.exitPuzzleMessage))
             sb.AppendLine(vm.exitPuzzleMessage);
-        if (vm.fragments.Count > 0)
-            sb.AppendLine(string.Join("、", vm.fragments));
+        // if (vm.fragments.Count > 0)
+        //     sb.AppendLine(string.Join("、", vm.fragments));
         UIHelper.SetText(exitPuzzleBodyText, sb.ToString());
 
         RequestCompletePuzzleSprite(vm.completePuzzleAssetKey);
