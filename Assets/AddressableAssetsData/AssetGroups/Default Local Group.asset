@@ -22,7 +22,7 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
   - m_GUID: 823153fd68d3fdf478d61021b04da501
-    m_Address: Assets/UI/Prefabs/MainMenuUI.prefab
+    m_Address: Assets/UI/Prefabs/MainMenu.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
   - m_GUID: 78e0e35ead634ce40b4139d5e8f07dd4

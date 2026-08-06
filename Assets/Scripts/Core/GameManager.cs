@@ -1,5 +1,4 @@
 using System.Threading;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public sealed class GameManager : MonoBehaviour {
@@ -19,7 +18,6 @@ public sealed class GameManager : MonoBehaviour {
             Destroy(gameObject);
             return;
         }
-
         Instance = this;
         InitializeGame();
         DontDestroyOnLoad(gameObject);
@@ -47,8 +45,18 @@ public sealed class GameManager : MonoBehaviour {
 
         sceneFlowManager = SceneFlowManager.GetInstance();
         sceneFlowManager.Init();
-        //绑定全局事件
+        //绑定全局指令和事件
+        var context = GameContext.Instance;
+        //金钱变更全局指令
+        var command = new ChangeCurrency();
+        context.AddCommand(command);
 
+        //金钱变更全局事件
+        // context.AddEvent("CurrencyChanged", (amount) => { context.Execute(command.Name, new DataBag().Set("amount", amount)); });会导致循环引用
+
+        //初始化游戏场景
+        sceneFlowManager.GoToMain();
+        _ = UIManager.GotoView("HUD");
     }
     private void Update() {
         float deltaTime = Time.deltaTime;

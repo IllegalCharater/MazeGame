@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Reflection;
 using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
@@ -116,15 +117,16 @@ public class UIManager {
         }
     }
 
+    //当前一个类对应一个UI界面，暂时不考虑同时开多个同类型界面
     private async Task<UIEntry> HandleViewTask(string viewName, DataBag options) {
         try {
-            GameObject prefab = await LoadPrefab(viewName);
+            GameObject prefab = await LoadPrefab(getPerfabName(viewName));
             if (prefab == null) {
                 Debug.LogError($"[UIManager] Addressable UI prefab not found: {viewName}. Please check Addressables address '{viewName}'.");
                 return null;
             }
             //获取option配置项
-            string layerName = options.Get<string>("layerName", null);
+            string layerName = options?.Get<string>("layerName", null);
 
             //根据viewName创建view,model,controller
             Type controllerType = getControllerType(viewName);
@@ -134,7 +136,7 @@ public class UIManager {
             //注入依赖
             var injector = Injector.Instance;
             Model model = injector.Resolve(modelType,
-            new object[] { viewName, GameContext.Instance.context }) as Model;
+                new object[] { viewName, GameContext.Instance.context }) as Model;
             if (layerName == null) {
                 layerName = model.Layer;
             }
@@ -146,8 +148,6 @@ public class UIManager {
             model.Initialize();
             view.Initialize();
             controller.Initialize();
-
-            StretchToParent(viewInstance);
 
             controller.EnterViewWithData(options);//传入初始化参数
 
@@ -281,6 +281,9 @@ public class UIManager {
             CloseOpenedView(viewNames[i]);
     }
 
+    private string getPerfabName(string viewName) {
+        return viewName;
+    }
     private Type getControllerType(string viewName) {
         return getUIType(viewName + "Controller");
     }
@@ -293,6 +296,22 @@ public class UIManager {
     private Type getUIType(string typeName) {
         Type type = Type.GetType(typeName);
         if (type == null) {
+            // Type.GetType 只搜索调用程序集，跨程序集（asmdef / 预编译 DLL）或带命名空间时找不到，
+            // 兜底遍历所有已加载程序集，先按全名、再按简单名匹配。
+            foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+                type = assembly.GetType(typeName);
+                if (type != null)
+                    break;
+            }
+            if (type == null) {
+                foreach (Assembly assembly in AppDomain.CurrentDomain.GetAssemblies()) {
+                    type = GetTypeBySimpleName(assembly, typeName);
+                    if (type != null)
+                        break;
+                }
+            }
+        }
+        if (type == null) {
             Debug.LogError("[UIManager] Could not find UI controller for view: " + typeName);
             return null;
         }
@@ -301,6 +320,20 @@ public class UIManager {
         //     return null;
         // }
         return type;
+    }
+
+    private Type GetTypeBySimpleName(Assembly assembly, string typeName) {
+        try {
+            Type[] types = assembly.GetTypes();
+            for (int i = 0; i < types.Length; i++) {
+                if (types[i].Name == typeName)
+                    return types[i];
+            }
+        }
+        catch (ReflectionTypeLoadException) {
+            // 部分程序集（编辑器专用等）无法完整加载，跳过
+        }
+        return null;
     }
 
     private GameObject instantiatePrefab(GameObject prefab, string layerName) {
@@ -315,20 +348,20 @@ public class UIManager {
         return instance;
     }
 
-    private async Task<GameObject> LoadPrefab(string viewName) {
-        if (prefabHandles.TryGetValue(viewName, out AsyncOperationHandle<GameObject> cachedHandle)) {
+    private async Task<GameObject> LoadPrefab(string prefabName) {
+        if (prefabHandles.TryGetValue(prefabName, out AsyncOperationHandle<GameObject> cachedHandle)) {
             if (cachedHandle.IsValid())
                 return cachedHandle.Result;
 
-            prefabHandles.Remove(viewName);
+            prefabHandles.Remove(prefabName);
         }
 
         // 这里的 viewName 必须和 Addressables 中的 Address 一致，例如 HUD、MainMenuUI。
-        AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(UIConfig.GetAddress(viewName));
+        AsyncOperationHandle<GameObject> handle = Addressables.LoadAssetAsync<GameObject>(UIConfig.GetAddress(prefabName));
         await handle.Task;
 
         if (handle.Status == AsyncOperationStatus.Succeeded && handle.Result != null) {
-            prefabHandles[viewName] = handle;
+            prefabHandles[prefabName] = handle;
             return handle.Result;
         }
 

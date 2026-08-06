@@ -47,17 +47,17 @@ public sealed class SceneFlowManager {
 
     public void GoToMain() {
         LoadScene(SceneState.MainMenu);
-        UIManager.GotoView("MainMenuUI");
+        _ = UIManager.GotoView("MainMenu");
     }
 
     public void GoToMaze() {
         LoadScene(SceneState.InMaze);
-        UIManager.GotoView("MazeUI");
+        _ = UIManager.GotoView("Maze");
     }
 
     public void GoToShop() {
         LoadScene(SceneState.MainMenu);
-        UIManager.GotoView("ShopUI");
+        _ = UIManager.GotoView("Shop");
     }
 
     private bool isInited = false;

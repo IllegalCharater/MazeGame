@@ -10,10 +10,9 @@ public interface IView {
     void OnHide();
 }
 
-
 public class View : MonoBehaviour, IView {
     public GameObject root => gameObject;
-    protected DataBag _data;
+    protected DataBag _data = new DataBag();
 
     public View() {
 
@@ -69,22 +68,13 @@ public class View : MonoBehaviour, IView {
     /// Controller 调用的唯一数据入口（传入通用数据包）
     /// </summary>
     public void UpdateData(DataBag data) {
-        _data = data;
-
-        // // 自动拆包：将 DataBag 中的值映射到当前 View 的标记字段
-        // AutoMapFields(data);
+        _data = data.Get("View", _data);
 
         // 子类重写此方法刷新 UI
         OnShow();
     }
 
-    // 自动映射（利用反射 + 缓存）
-    // private void AutoMapFields(DataBag data) {
-    //     // 使用之前定义的 DataBinder，但适配为从 DataBag 读取
-    //     // 这里直接调用扩展方法（见下方）
-    //     this.BindFromDataBag(data);
-    // }
-    protected GameObject GetChildByPath(string path, GameObject parent = null) {
+    public GameObject GetChildByPath(string path, GameObject parent = null) {
 
         Transform childTransform = UIHelper.FindTransformByPath(parent ? parent.transform : transform, path);
         var child = childTransform != null ? childTransform.gameObject : null;

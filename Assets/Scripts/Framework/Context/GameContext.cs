@@ -18,6 +18,14 @@ public sealed class GameContext {
     }
 
 
+    // 直接传 lambda 时自动包装成具体委托类型
+    public void AddEvent(string eventName, Action action) {
+        context.BindEvent(eventName, action);
+    }
+    public void AddEvent(string eventName, Action<object> action) {
+        context.BindEvent(eventName, action);
+    }
+    // 通用入口：支持任意签名（method group / 已实例化委托）
     public void AddEvent(string eventName, Delegate action) {
         context.BindEvent(eventName, action);
     }
@@ -26,8 +34,8 @@ public sealed class GameContext {
         context.UnbindEvent(eventName, action);
     }
 
-    public void AddCommand(string commandName, ICommand command) {
-        context.BindCommand(commandName, command);
+    public void AddCommand(ICommand command, string commandName = null) {
+        context.BindCommand(command, commandName);
     }
 
     public void RemoveCommand(string commandName) {

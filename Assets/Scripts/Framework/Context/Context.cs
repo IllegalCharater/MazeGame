@@ -35,16 +35,19 @@ public class Context : IDisposable {
         events.Unsubscribe(eventName, action);
     }
 
-    public void BindCommand(string commandName, ICommand command) {
-        if (string.IsNullOrEmpty(commandName) || command == null)
-            return;
-        commands.Register(commandName, command);
+    public void BindCommand(ICommand command, string commandName = null) {
+        commands.Register(command, commandName);
     }
 
     public void UnbindCommand(string commandName) {
         if (string.IsNullOrEmpty(commandName))
             return;
         commands.UnRegister(commandName);
+    }
+
+    public bool TryGetCommand(string commandName, out ICommand command) {
+        command = null;
+        return !string.IsNullOrEmpty(commandName) && commands.TryGetHandler(commandName, out command);
     }
 
     public void ClearAllEvents() {

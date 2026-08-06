@@ -4,48 +4,37 @@ using UnityEngine;
 using UnityEngine.UI;
 
 public sealed class HUDController : Controller {
+    //初始化
     public override void OnOpenView() {
 
     }
-    public override void BindEvents() {
-        // GameEvents.OnCurrencyChanged += UpdateCurrency;
-        // GameEvents.OnEnergyChanged += UpdateEnergy;
-        // GameEvents.OnGameStateChanged += OnGameStateChanged;
-        // GameEvents.OnInventoryChanged += OnInventoryChanged;
-        // BindClickEvent(profileButton, OpenProfileDetail);
+    //ui刷新
+    public override void OnViewRefresh() {
 
-        BindEvent("OnCurrencyChanged", UpdateCurrency);
-        BindEvent("OnEnergyChanged", UpdateEnergy);
-        BindEvent("OnGameStateChanged", OnGameStateChanged);
-        BindEvent("OnInventoryChanged", OnInventoryChanged);
-
-        BindClickEvent("Profile Button", OpenProfileDetail);
     }
+    //绑定事件
+    public override void BindEvents() {
+        BindEvent<int>("CurrencyChanged", UpdateCurrency);
+        // BindEvent("EnergyChanged", UpdateEnergy);
 
-    private void RefreshNow() {
-        PlayerProfile profile = GameManager.Instance.gameDatabase.GetPlayerData().Profile;
-        var bag = new DataBag();
-        view.UpdateData(bag.FromObject(profile));
+        var _view = view as HUDView;
+        Button _profileButton = _view.profileButton;
+        BindClickEvent(_profileButton, OpenProfileDetail);
     }
 
     private void OpenProfileDetail() {
-        UIManager.GotoView("ProfileDetailUI");
+        _ = UIManager.GotoView("ProfileDetailUI");
     }
 
-    public void UpdateCurrency() {
-
+    private void UpdateCurrency(int amount) {
+        var _model = model as HUDModel;
+        _model.playerCurrency = amount;
+        var _view = view as HUDView;
+        _view.UpdateCurrency(amount);
     }
 
-    public void UpdateEnergy() {
+    private void UpdateEnergy() {
 
-    }
-
-    public void OnGameStateChanged() {
-
-    }
-
-    private void OnInventoryChanged() {
-        // ShowToast("Inventory updated.");
     }
 
     public HUDController(Model model, View view) : base(model, view) { }

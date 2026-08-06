@@ -6,14 +6,12 @@ public class PlayerDatabase {
     public PlayerProfile Profile;
     public PlayerCollections Collections;
     public HashSet<string> Blueprints;
-    public List<ActiveBuff> ActiveBuffs;
+    // public List<ActiveBuff> ActiveBuffs;
 
     public string playerId = "unknown";
 
     public void init(string playerId) {
         this.playerId = playerId;
-
-        PlayerStartData startData = GameDatabase.Instance.Get<PlayerStartData>("player_start", this.playerId);
 
         Inventory = new PlayerInventory();
         Inventory.Init(this.playerId);
@@ -23,7 +21,7 @@ public class PlayerDatabase {
 
         Collections = new PlayerCollections();
         Blueprints = new HashSet<string>();
-        ActiveBuffs = new List<ActiveBuff>();
+        // ActiveBuffs = new List<ActiveBuff>();
     }
 
     //从外部更新数据
