@@ -5,7 +5,7 @@ public sealed class HUDController : BaseUIController
 {
     public override string layerName => UIConfig.TopLayerName;
     public override bool hasInputBlocker => false;
-    
+
     private Text playerNameText;
     private Text levelText;
     private Text currencyText;
@@ -23,13 +23,13 @@ public sealed class HUDController : BaseUIController
 
     public override void BindUI()
     {
-        GameObject profileCard=FindObject("Profile Card");
-        playerNameText=FindComponent<Text>(profileCard,"Player Name");
-        levelText=FindComponent<Text>(profileCard,"Level Text");
-        energyText=FindComponent<Text>(profileCard,"Exp Text");
-        profileButton=FindComponent<Button>(profileCard);
-        GameObject coinBar=FindObject("CoinBar");
-        currencyText=FindComponent<Text>(coinBar,"Currency");
+        GameObject profileCard = FindObject("Profile Card");
+        playerNameText = FindComponent<Text>(profileCard, "Player Name");
+        levelText = FindComponent<Text>(profileCard, "Level Text");
+        energyText = FindComponent<Text>(profileCard, "Exp Text");
+        profileButton = FindComponent<Button>(profileCard);
+        GameObject coinBar = FindObject("CoinBar");
+        currencyText = FindComponent<Text>(coinBar, "Currency");
         if (toastText != null)
             toastText.gameObject.SetActive(false);
     }
@@ -140,7 +140,7 @@ public sealed class HUDController : BaseUIController
 
     private void OpenProfileDetail()
     {
-        UIManager.GotoView("ProfileDetailUI");
+        // UIManager.GotoView("ProfileDetailUI");
     }
 
     private void OnInventoryChanged()
@@ -156,5 +156,5 @@ public sealed class HUDController : BaseUIController
         toastText.gameObject.SetActive(true);
         UIHelper.SetText(toastText, message);
     }
-    
+
 }

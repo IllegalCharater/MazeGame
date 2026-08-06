@@ -28,12 +28,12 @@ public sealed class MainMenuUIController : BaseUIController
 
     public void OpenProfileDetail()
     {
-        UIManager.GotoView("ProfileDetailUI");
+        // UIManager.GotoView("ProfileDetailUI");
     }
 
     public void HideProfileDetail()
     {
-        UIManager.CloseView("ProfileDetailUI");
+        // UIManager.CloseView("ProfileDetailUI");
     }
 
     private void CacheReferences()
