@@ -1,12 +1,25 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
 using UnityEngine;
 
-public class DataBag {
+public class DataBag : IEnumerable<KeyValuePair<string, object>> {
     private Dictionary<string, object> _data = new Dictionary<string, object>();
 
+    // 支持集合初始化器语法：new DataBag { { "energy", 1 }, { "name", xxx }, ... }
+    public void Add(string key, object value) {
+        _data[key] = value;
+    }
+
+    public IEnumerator<KeyValuePair<string, object>> GetEnumerator() {
+        return _data.GetEnumerator();
+    }
+
+    IEnumerator IEnumerable.GetEnumerator() {
+        return GetEnumerator();
+    }
 
     // 设置数据（支持链式调用）
     public DataBag Set<T>(string key, T value) {
@@ -20,10 +33,6 @@ public class DataBag {
             if (_data.TryGetValue(key, out object value)) {
                 if (value is T typed) {
                     return typed;
-                }
-                else if (typeof(T) == typeof(DataBag)) {
-                    var bag = new DataBag().FromObject(value);
-                    return (T)(object)bag;
                 }
             }
             return defaultValue;

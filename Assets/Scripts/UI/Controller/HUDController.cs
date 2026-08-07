@@ -1,21 +1,26 @@
 using System;
-using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.UI;
 
 public sealed class HUDController : Controller {
     //初始化
     public override void OnOpenView() {
-
+        UpdateHUD();
     }
     //ui刷新
     public override void OnViewRefresh() {
+        UpdateHUD();
+    }
 
+    private void UpdateHUD() {
+        var _model = model as HUDModel;
+        PlayerProfile profile = _model.GetPlayerProfile();
+        UpdateCurrency(profile.currency);
     }
     //绑定事件
-    public override void BindEvents() {
-        BindEvent<int>("CurrencyChanged", UpdateCurrency);
-        // BindEvent("EnergyChanged", UpdateEnergy);
+    protected override void BindEvents() {
+        BindEvent<int>(EventType.CurrencyChanged, UpdateCurrency);
+        BindEvent<DataBag>(EventType.EnergyChanged, UpdateEnergy);
 
         var _view = view as HUDView;
         Button _profileButton = _view.profileButton;
@@ -23,7 +28,7 @@ public sealed class HUDController : Controller {
     }
 
     private void OpenProfileDetail() {
-        _ = UIManager.GotoView("ProfileDetailUI");
+        // _ = UIManager.GotoView("ProfileDetail");
     }
 
     private void UpdateCurrency(int amount) {
@@ -33,7 +38,7 @@ public sealed class HUDController : Controller {
         _view.UpdateCurrency(amount);
     }
 
-    private void UpdateEnergy() {
+    private void UpdateEnergy(DataBag data) {
 
     }
 

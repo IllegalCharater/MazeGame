@@ -20,23 +20,17 @@ public class HUDView : View {
     private string currencyFormat = "{0:0}";
     private string energyFormat = "{0}/{1}";
 
-    public override void BindViewUI() {
+    protected override void BindViewUI() {
         profileCard = GetChildByPath("Profile Card");
         coinBar = GetChildByPath("Coin Bar");
         playerNameText = GetChildByPath("Player Name", profileCard)?.GetComponent<Text>();
         levelText = GetChildByPath("Level Text", profileCard)?.GetComponent<Text>();
         energyText = GetChildByPath("Exp Text", profileCard)?.GetComponent<Text>();
         profileButton = profileCard?.GetComponent<Button>();
+        currencyText = coinBar.GetChildByPath("Gold Text").GetComponent<Text>();
     }
 
-    public override void OnViewShow() {
-        var profile = _data.Get<PlayerProfile>("PlayerProfile", null);
-        UpdateProfile(profile);
-        UpdateCurrency(profile.currency);
-        UpdateEnergy(profile.energy, profile.maxEnergy);
-    }
-
-    private void UpdateProfile(PlayerProfile profile) {
+    public void UpdateProfile(PlayerProfile profile) {
         string displayName = string.IsNullOrEmpty(profile.playerDisplayName) ? string.Empty : profile.playerDisplayName;
         SetText(playerNameText, displayName);
         SetText(levelText, string.Format(levelFormat, Mathf.Max(1, profile.level)));
@@ -48,7 +42,7 @@ public class HUDView : View {
         SetText(currencyText, string.Format(currencyFormat, value));
     }
 
-    private void UpdateEnergy(int current, int max) {
+    public void UpdateEnergy(int current, int max) {
         SetText(energyText, string.Format(energyFormat, current, max));
     }
 

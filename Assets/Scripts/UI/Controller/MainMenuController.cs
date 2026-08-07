@@ -5,7 +5,7 @@ public class MainMenuController : Controller {
     public override void OnViewRefresh() {
 
     }
-    public override void BindEvents() {
+    protected override void BindEvents() {
         var _view = view as MainMenuView;
 
         BindClickEvent(_view.MazeEntry, GotoMaze);
@@ -13,9 +13,9 @@ public class MainMenuController : Controller {
     }
 
     void GotoMaze() {
-        ExecuteCommand("CurrencyChangedCommand", new DataBag().Set<string>("type", "add").Set<int>("amount", 1));
+        // ExecuteCommand("CurrencyChangedCommand", new DataBag() { { "type", "add" }, { "amount", 1 } });
+        _ = UIManager.GotoView("Maze");
     }
-
     void GotoKitchen() {
 
     }

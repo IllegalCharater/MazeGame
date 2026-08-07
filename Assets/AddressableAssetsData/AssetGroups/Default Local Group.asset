@@ -26,7 +26,7 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
   - m_GUID: 78e0e35ead634ce40b4139d5e8f07dd4
-    m_Address: Assets/UI/Prefabs/MazeUI.prefab
+    m_Address: Assets/UI/Prefabs/Maze.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
   - m_GUID: 14af8167f4f441b4e980b8e40161206a

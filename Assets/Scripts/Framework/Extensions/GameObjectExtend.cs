@@ -1,3 +1,4 @@
+using System.Collections.Generic;
 using UnityEngine;
 
 public static class GameObjectExtensions {
@@ -15,5 +16,14 @@ public static class GameObjectExtensions {
             return null;
         }
         return childTransform.gameObject;
+    }
+
+    // 返回所有直接子物体的列表
+    public static List<GameObject> GetChildren(this GameObject obj) {
+        List<GameObject> children = new List<GameObject>();
+        foreach (Transform child in obj.transform) {
+            children.Add(child.gameObject);
+        }
+        return children;
     }
 }

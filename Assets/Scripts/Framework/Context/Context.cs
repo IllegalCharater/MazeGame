@@ -10,44 +10,38 @@ public class Context : IDisposable {
         this.commands = commands;
     }
 
-    public void HandleEvent(string eventName, object[] args = null) {
-        if (string.IsNullOrEmpty(eventName))
-            return;
-        events.Publish(eventName, args);
+    public void HandleEvent(EventType eventType, object[] args = null) {
+        events.Publish(eventType, args);
     }
 
-    public Task<CommandResult> HandleCommand(string commandName, DataBag payload) {
-        if (string.IsNullOrEmpty(commandName))
-            return Task.FromResult(CommandResult.Failed("Command name is empty."));
-        return commands.Execute(commandName, payload);
+    public Task<CommandResult> HandleCommand(CommandType commandType, DataBag payload) {
+        return commands.Execute(commandType, payload);
     }
 
-    public void BindEvent(string eventName, Delegate action) {
-        if (string.IsNullOrEmpty(eventName) || action == null)
+    public void BindEvent(EventType eventType, Delegate action) {
+        if (action == null)
             return;
 
-        events.Subscribe(eventName, action);
+        events?.Subscribe(eventType, action);
     }
-    public void UnbindEvent(string eventName, Delegate action) {
-        if (string.IsNullOrEmpty(eventName) || action == null)
+    public void UnbindEvent(EventType eventType, Delegate action) {
+        if (action == null)
             return;
 
-        events.Unsubscribe(eventName, action);
+        events?.Unsubscribe(eventType, action);
     }
 
-    public void BindCommand(ICommand command, string commandName = null) {
-        commands.Register(command, commandName);
+    public void BindCommand(ICommand command) {
+        commands?.Register(command);
     }
 
-    public void UnbindCommand(string commandName) {
-        if (string.IsNullOrEmpty(commandName))
-            return;
-        commands.UnRegister(commandName);
+    public void UnbindCommand(CommandType commandType) {
+        commands?.UnRegister(commandType);
     }
 
-    public bool TryGetCommand(string commandName, out ICommand command) {
+    public bool TryGetCommand(CommandType commandType, out ICommand command) {
         command = null;
-        return !string.IsNullOrEmpty(commandName) && commands.TryGetHandler(commandName, out command);
+        return commands != null && commands.TryGetHandler(commandType, out command);
     }
 
     public void ClearAllEvents() {

@@ -52,7 +52,7 @@ public sealed class GameManager : MonoBehaviour {
         context.AddCommand(command);
 
         //金钱变更全局事件
-        // context.AddEvent("CurrencyChanged", (amount) => { context.Execute(command.Name, new DataBag().Set("amount", amount)); });会导致循环引用
+        // context.AddEvent(EventType.CurrencyChanged, (amount) => { context.Execute(CommandType.ChangeCurrency, new DataBag().Set("amount", amount)); });会导致循环引用
 
         //初始化游戏场景
         sceneFlowManager.GoToMain();

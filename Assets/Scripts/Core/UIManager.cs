@@ -31,8 +31,7 @@ public class UIManager {
 
     public void Init() {
         ensureUILayers();
-        // Addressables 是异步加载，这里用兼容写法，不要求调用方 await。
-        // GotoView("HUD");
+
         Injector.Instance.Register(Instance);
     }
 
@@ -54,31 +53,59 @@ public class UIManager {
 
         UIEntry entry = GetView(viewName);
         if (entry != null) {
-            if (entry.view.root == null) Debug.LogError(viewName + "has no root!");
+            if (entry.controller == null || entry.view == null || entry.model == null) Debug.LogError(viewName + "entry is null!");
             var controller = entry.controller;
-            controller.OnRefresh();
-            return entry;
+            var model = entry.model;
+            switch (model.state) {
+                case ViewState.None:
+                    Debug.LogWarning(viewName + "view is not inited!");
+                    return null;
+                case ViewState.Opened:
+                    controller.EnterViewWithData(new DataBag { { "shouldRefresh", true } });
+                    return entry;
+                case ViewState.Hidden:
+                    SetViewActive(viewName, true);
+                    return entry;
+                default:
+                    Debug.LogWarning(viewName + "view is in unknown state: " + model.state);
+                    return null;
+            }
+
         }
         entry = await GetInstance().gotoView(viewName, options);
         return entry;
     }
 
-    //获得已打开的界面
+    public static void SetViewActive(string viewName, bool isActive) {
+        UIEntry entry = GetView(viewName);
+        if (entry == null) return;
+        var controller = entry.controller;
+        var model = entry.model;
+        if (model.state == ViewState.Hidden || model.state == ViewState.Opened) {
+            controller.EnterViewWithData(new DataBag { { "shouldRefresh", true }, { "isActive", isActive } });
+        }
+        else {
+            Debug.LogWarning(viewName + ": Cannot set view active");
+        }
+
+    }
+
+    //获得已加载的界面
     public static UIEntry GetView(string viewName) {
-        return GetInstance().GetOpenedView(viewName);
+        return GetInstance().GetLoadedView(viewName);
     }
 
     //界面是否打开
     public static bool IsOpen(string viewName) {
-        return GetInstance().GetOpenedView(viewName) != null;
+        return GetInstance().GetLoadedView(viewName) != null;
     }
 
     //关闭已打开的界面
     public static void CloseView(string viewName) {
-        GetInstance().CloseOpenedView(viewName);
+        GetInstance().RemovedLoadedView(viewName);
     }
 
-    //关闭所有已打开的界面
+    //关闭所有已加载的界面
     public static void CloseAll() {
         GetInstance().CloseAllViews();
     }
@@ -244,41 +271,59 @@ public class UIManager {
         UnityEngine.Object.DontDestroyOnLoad(eventSystem);
     }
 
-    private UIEntry GetOpenedView(string viewName) {
+    private UIEntry GetLoadedView(string viewName) {
         if (string.IsNullOrEmpty(viewName))
             return null;
 
-        if (!openedViews.TryGetValue(viewName, out UIEntry entry))
+        if (!openedViews.TryGetValue(viewName, out UIEntry entry)) {
+            Debug.LogWarning(viewName + " is not loaded");
             return null;
+        }
 
-        if (entry.controller != null && entry.view.root != null)
+        var controller = entry.controller;
+        var model = entry.model;
+        var view = entry.view;
+        if (controller != null && view != null && model != null)
             return entry;
 
-        openedViews.Remove(viewName);
+        ClearViewEntry(viewName, entry);
         return null;
     }
 
-    private void CloseOpenedView(string viewName) {
-        UIEntry entry = GetOpenedView(viewName);
+    private void RemovedLoadedView(string viewName) {
+        UIEntry entry = GetLoadedView(viewName);
         if (entry == null)
             return;
 
-        entry.controller.OnClose();
-        GameObject root = entry.view.root;
+        ClearViewEntry(viewName, entry);
+    }
+
+    private void ClearViewEntry(string viewName, UIEntry entry) {
+        var controller = entry.controller;
+        var model = entry.model;
+        var view = entry.view;
+        if (controller != null) {
+            controller.OnClose();
+        }
+        else {
+            view?.Destroy();
+            model?.Dispose();
+        }
         openedViews.Remove(viewName);
+        ReleasePrefabHandle(viewName);
+    }
+    private void ReleasePrefabHandle(string viewName) {
         if (prefabHandles.TryGetValue(viewName, out AsyncOperationHandle<GameObject> handle)) {
-            if (handle.IsValid()) Addressables.Release(handle.Result);
+            if (handle.IsValid())
+                Addressables.Release(handle.Result);
             prefabHandles.Remove(viewName);
         }
-
-        if (root != null)
-            UnityEngine.Object.Destroy(root);
     }
 
     private void CloseAllViews() {
         List<string> viewNames = new List<string>(openedViews.Keys);
         for (int i = 0; i < viewNames.Count; i++)
-            CloseOpenedView(viewNames[i]);
+            RemovedLoadedView(viewNames[i]);
     }
 
     private string getPerfabName(string viewName) {
@@ -394,7 +439,7 @@ public class UIManager {
 
     //暂时改为公有方法，后续改为订阅添加blocker事件
     public void EnsureInputBlocker(string viewName) {
-        UIEntry entry = GetOpenedView(viewName);
+        UIEntry entry = GetLoadedView(viewName);
         if (entry != null) {
             ensureInputBlocker(entry.view.root);
         }

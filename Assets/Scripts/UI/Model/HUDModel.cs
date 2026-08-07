@@ -15,5 +15,9 @@ public class HUDModel : Model {
         playerCurrency = _profile.currency;
     }
 
+    public PlayerProfile GetPlayerProfile() {
+        return GetPlayerData().Profile;
+    }
+
     public HUDModel(string viewName, Context context) : base(viewName, context) { }
 }

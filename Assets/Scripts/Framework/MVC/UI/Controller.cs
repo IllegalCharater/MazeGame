@@ -5,10 +5,10 @@ using UnityEngine;
 using System.Threading.Tasks;
 public enum ViewState {
     None,
-    Loading,
+    // Loading, 从uimanger中判断加载状态
     Opened,
     Hidden,
-    Closed
+    // Closed，ui关闭后会立刻删除实例
 }
 
 public class Controller {
@@ -16,7 +16,7 @@ public class Controller {
     protected Model model { get; private set; }
     protected View view { get; private set; }
 
-    protected DataBag _data = new DataBag();
+    protected DataBag _data;
 
     public Controller(Model model, View view) {
         this.model = model;
@@ -33,8 +33,8 @@ public class Controller {
     //ui打开时初始化
     public void OnOpen() {
         _OnOpen();
+        //向model和view分发数据，自动化刷新逻辑在model和view中重写
         //加载初始化数据（从model和传入的参数中获得）
-        model.state = ViewState.Loading;
         model.UpdateData(_data);
         //拼装传入view的参数
         view.BindUI();
@@ -51,64 +51,82 @@ public class Controller {
     }
     //ui关闭时调用
     public void OnClose() {
+        // model.state = ViewState.Closed;
+        OnViewClose();
         _OnClose();
+    }
+    public virtual void OnViewClose() {
 
     }
     //ui刷新时调用
     public void OnRefresh() {
         _OnRefresh();
-
         OnViewRefresh();
+        model.state = ViewState.Opened;
     }
     public virtual void OnViewRefresh() {
 
     }
     //ui隐藏时调用
     public void OnHide() {
+        model.state = ViewState.Hidden;
         _OnHide();
+        OnViewHide();
+    }
+    public virtual void OnViewHide() {
+
     }
     /// <summary>
     /// Controller 调用的唯一数据入口（传入通用数据包）
     /// </summary>
     public void EnterViewWithData(DataBag data) {
-        data ??= new DataBag();
-        _data = data;
-
-        //读取配置项
-        bool shouldRefresh = data.Get("shouldRefresh", false);
+        //读取配置
+        bool shouldRefresh = false;
+        bool isActive = true;
+        if (data != null) {
+            _data = data;
+            shouldRefresh = _data.Get<bool>("shouldRefresh");
+            isActive = _data.Get<bool>("isActive");
+        }
         if (shouldRefresh) {
-            OnRefresh();
+            if (isActive) {
+                OnRefresh();
+            }
+            else {
+                OnHide();
+            }
+            return;
         }
-        else {
-            OnOpen();
-        }
+
+        //默认
+        OnOpen();
     }
     // 触发事件（带参数）
-    public void DispatchEvent<T>(string eventName, T payload) {
-        model.DispatchEvent(eventName, new object[] { payload });
+    public void DispatchEvent<T>(EventType eventType, T payload) {
+        model.DispatchEvent(eventType, payload);
     }
     // 触发事件（无参数）
-    public void DispatchEvent(string eventName) {
-        model.DispatchEvent(eventName);
+    public void DispatchEvent(EventType eventType) {
+        model.DispatchEvent(eventType);
     }
     // 执行指令（返回结果，可 await 或忽略）
-    public Task<CommandResult> ExecuteCommand(string commandName, DataBag payload = null) {
-        return model.ExecuteCommand(commandName, payload);
+    public Task<CommandResult> ExecuteCommand(CommandType commandType, DataBag payload = null) {
+        return model.ExecuteCommand(commandType, payload);
     }
     // 订阅专门事件,点击事件
-    public virtual void BindEvents() { }
+    protected virtual void BindEvents() { }
     //事件相关操作
-    protected void BindEvent(string eventName, Action action) {
-        model.AddEvent(eventName, action);
+    protected void BindEvent(EventType eventType, Action action) {
+        model.AddEvent(eventType, action);
     }
-    protected void BindEvent<T>(string eventName, Action<T> action) {
-        model.AddEvent(eventName, action);
+    protected void BindEvent<T>(EventType eventType, Action<T> action) {
+        model.AddEvent(eventType, action);
     }
-    protected void UnbindEvent(string eventName, Action action) {
-        model.RemoveEvent(eventName, action);
+    protected void UnbindEvent(EventType eventType, Action action) {
+        model.RemoveEvent(eventType, action);
     }
-    protected void UnbindEvent<T>(string eventName, Action<T> action) {
-        model.RemoveEvent(eventName, action);
+    protected void UnbindEvent<T>(EventType eventType, Action<T> action) {
+        model.RemoveEvent(eventType, action);
     }
 
     //绑定按钮点击事件
@@ -142,13 +160,15 @@ public class Controller {
         //todo:加载并组装数据
         LoadData();
     }
+    //子类重写自定义数据装载方式
     public virtual void LoadData() {
-
+        //组装_data
     }
     private void _OnClose() {
+
         _UnbindEvents();
-        model.Dispose();
-        view.OnDestroy();
+        model?.Dispose();
+        view?.Destroy();
     }
     private void _OnRefresh() {
         model.UpdateData(_data);
@@ -157,12 +177,13 @@ public class Controller {
         view.root.SetActive(true);
         view.root.transform.SetAsLastSibling();
     }
-    private void _OnHide() { }
+    private void _OnHide() {
+        view.root.SetActive(false);
+    }
 
     //绑定通用事件
     private void _BindEvents() {
-        //绑定外部数据更新事件
-        BindEvent(model.viewName + "UpdateData", (DataBag data) => { EnterViewWithData(data); });
+
     }
 
     //解绑通用事件

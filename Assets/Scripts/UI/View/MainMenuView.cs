@@ -6,12 +6,10 @@ public class MainMenuView : View {
     public Button MazeEntry;
     public Button KitchenEntry;
 
-    public override void BindViewUI() {
+    protected override void BindViewUI() {
         bottomArea = GetChildByPath("Bottom Navigation");
         MazeEntry = GetChildByPath("Maze Entry").GetComponent<Button>();
         KitchenEntry = GetChildByPath("Kitchen Entry").GetComponent<Button>();
     }
-
-
 
 }
