@@ -47,11 +47,11 @@ public sealed class GameManager : MonoBehaviour {
         sceneFlowManager.Init();
         //绑定全局指令和事件
         var context = GameContext.Instance;
-        //金钱变更全局指令
+        //全局指令
         var command = new ChangeCurrency();
         context.AddCommand(command);
 
-        //金钱变更全局事件
+        //全局事件
         // context.AddEvent(EventType.CurrencyChanged, (amount) => { context.Execute(CommandType.ChangeCurrency, new DataBag().Set("amount", amount)); });会导致循环引用
 
         //初始化游戏场景

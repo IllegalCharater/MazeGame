@@ -276,7 +276,7 @@ public class UIManager {
             return null;
 
         if (!openedViews.TryGetValue(viewName, out UIEntry entry)) {
-            Debug.LogWarning(viewName + " is not loaded");
+            // Debug.LogWarning(viewName + " is not loaded");
             return null;
         }
 

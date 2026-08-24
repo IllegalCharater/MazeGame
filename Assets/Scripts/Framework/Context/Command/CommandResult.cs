@@ -8,7 +8,7 @@ public sealed class CommandResult {
     private CommandResult(bool success, string message, object payload) {
         this.success = success;
         this.message = message;
-        Debug.Log(message + "" + success);
+        // Debug.Log(message + "" + success);
         this.payload = payload;
     }
 

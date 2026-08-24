@@ -7,10 +7,10 @@ public class PlayerInventory {
     public void Init(string playerId) {
         this.playerId = playerId;
         items.Clear();
-        //背包数据初始化
-        PlayerStartData startData = GameDatabase.Instance.Get<PlayerStartData>("player_start", this.playerId);
-        // if (startStarts != null) ReplaceFrom(startStarts);
-        items = startData.items;
+        //背包数据初始化（配置表为通用行，直接按列名读取）
+        ConfigData _data = GameDatabase.Instance.Get("player_start", this.playerId);
+        if (_data != null)
+            items = _data.Get("items", items);
     }
 
     public void UpdateData(DataBag newdata) {
@@ -87,7 +87,7 @@ public class PlayerInventory {
     }
 
     public IReadOnlyDictionary<string, int> GetSnapshot() {
-        return new Dictionary<string, int>(items);
+        return items;
     }
 
     private bool ApplyRemoveSilent(string itemId, int amount) {

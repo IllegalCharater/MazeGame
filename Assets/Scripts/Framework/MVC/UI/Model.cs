@@ -143,8 +143,8 @@ public class Model : IDisposable {
         UIHelper.ClearAllClickEvent(clickActions);
     }
 
-    public T GetConfigData<T>(string rootKey, string id) where T : BaseData {
-        return GameDatabase.Instance.Get<T>(rootKey, id);
+    public ConfigData GetConfigData(string rootKey, string id) {
+        return GameDatabase.Instance.Get(rootKey, id);
     }
 
     public PlayerDatabase GetPlayerData() {

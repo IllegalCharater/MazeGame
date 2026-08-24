@@ -4,7 +4,7 @@ using UnityEngine;
 public class GameDatabase {
     public static GameDatabase Instance { get; private set; }
 
-    public Dictionary<string, Dictionary<string, BaseData>> configdatabases = new Dictionary<string, Dictionary<string, BaseData>>();
+    public Dictionary<string, ConfigDatabase> configdatabases = new Dictionary<string, ConfigDatabase>();
     public Dictionary<string, PlayerDatabase> playerDatabases = new Dictionary<string, PlayerDatabase>();
 
     private string defaultPlayerId = "player_warrior";
@@ -22,10 +22,10 @@ public class GameDatabase {
     public void Init() {
         configdatabases.Clear();
         playerDatabases.Clear();
-        //初始化json为对象
-        foreach (var rootKey in DataConfig.DataTypes.Keys) {
+        //初始化json为对象（rootKey 及数据文件均以 base.json 注册信息为准）
+        foreach (var rootKey in DatabaseHelper.GetRegisteredRootKeys()) {
             configdatabases[rootKey] = DatabaseHelper.CreateDataMap(rootKey);
-            Debug.Log($"Loaded {rootKey} data, count: {configdatabases[rootKey].Count}");
+            Debug.Log($"Loaded {rootKey} data, count: {configdatabases[rootKey].GetAllDatas().Count}");
         }
         //初始化玩家数据,默认仅加载一个玩家
         playerDatabases.Add(defaultPlayerId, new PlayerDatabase());
@@ -35,28 +35,26 @@ public class GameDatabase {
         Injector.Instance.Register(Instance);
     }
 
-    public T Get<T>(string rootKey, string id) where T : BaseData {
+    public ConfigData Get(string rootKey, string id) {
         if (string.IsNullOrEmpty(rootKey) || string.IsNullOrEmpty(id))
             return null;
-        if (!configdatabases.TryGetValue(rootKey, out Dictionary<string, BaseData> table))
+        if (!configdatabases.TryGetValue(rootKey, out ConfigDatabase table))
             return null;
-        if (!table.TryGetValue(id, out BaseData data))
+        if (!table.GetData(id, out ConfigData data))
             return null;
 
-        return data as T;
+        return data;
     }
 
-    public IReadOnlyList<T> GetAll<T>(string rootKey) where T : BaseData {
-        List<T> result = new List<T>();
+    public IReadOnlyList<ConfigData> GetAll(string rootKey) {
+        List<ConfigData> result = new List<ConfigData>();
         if (string.IsNullOrEmpty(rootKey))
             return result;
-        if (!configdatabases.TryGetValue(rootKey, out Dictionary<string, BaseData> table))
+        if (!configdatabases.TryGetValue(rootKey, out ConfigDatabase table))
             return result;
 
-        foreach (BaseData data in table.Values) {
-            if (data is T typed)
-                result.Add(typed);
-        }
+        foreach (ConfigData data in table.GetAllDatas())
+            result.Add(data);
 
         return result;
     }
@@ -64,8 +62,8 @@ public class GameDatabase {
     public bool Contains(string rootKey, string id) {
         return !string.IsNullOrEmpty(rootKey)
             && !string.IsNullOrEmpty(id)
-            && configdatabases.TryGetValue(rootKey, out Dictionary<string, BaseData> table)
-            && table.ContainsKey(id);
+            && configdatabases.TryGetValue(rootKey, out ConfigDatabase table)
+            && table.Contains(id);
     }
 
     public void Dispose() {

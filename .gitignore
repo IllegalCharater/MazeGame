@@ -43,3 +43,5 @@ Desktop.ini
 
 # Local logs
 *.log
+
+Assets/Configs/Generated/Resources/

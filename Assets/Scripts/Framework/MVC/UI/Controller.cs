@@ -151,8 +151,8 @@ public class Controller {
     }
 
     //获得配置表数据
-    protected T GetConfigData<T>(string rootKey, string id) where T : BaseData {
-        return model.GetConfigData<T>(rootKey, id);
+    protected ConfigData GetConfigData(string rootKey, string id) {
+        return model.GetConfigData(rootKey, id);
     }
 
     //通用流程

@@ -1,3 +1,5 @@
+using UnityEngine;
+
 [System.Serializable]
 public class PlayerProfile {
     public string playerId;
@@ -11,14 +13,18 @@ public class PlayerProfile {
 
     public void Init(string playerId) {
         this.playerId = playerId;
-        PlayerProfile _profile = GameDatabase.Instance.Get<PlayerStartData>("player_start", this.playerId).profile;
-        playerDisplayName = _profile.playerDisplayName;
-        currency = _profile.currency;
-        maxCurrency = _profile.maxCurrency;
-        energy = _profile.energy;
-        maxEnergy = _profile.maxEnergy;
-        level = _profile.level;
-        equippedOutfitId = _profile.equippedOutfitId;
+        ConfigData _data = GameDatabase.Instance.Get("player_start", this.playerId);
+        if (_data == null) {
+            Debug.LogWarning($"[PlayerProfile] player_start row not found: {playerId}");
+            return;
+        }
+        playerDisplayName = _data.Get("playerDisplayName", playerDisplayName);
+        currency = _data.Get("currency", currency);
+        maxCurrency = _data.Get("maxCurrency", maxCurrency);
+        energy = _data.Get("energy", energy);
+        maxEnergy = _data.Get("maxEnergy", maxEnergy);
+        level = _data.Get("level", level);
+        equippedOutfitId = _data.Get("equippedOutfitId", equippedOutfitId);
     }
 
     public void UpdateData(DataBag newdata) {
