@@ -44,6 +44,7 @@ public class Controller {
         _BindEvents();
         BindEvents();
         model.state = ViewState.Opened;
+        DispatchEvent(EventType.OnViewLoaded, model.viewName);
     }
 
     public virtual void OnOpenView() {
@@ -166,7 +167,7 @@ public class Controller {
     }
     private void _OnClose() {
 
-        _UnbindEvents();
+        // _UnbindEvents();
         model?.Dispose();
         view?.Destroy();
     }
@@ -183,12 +184,14 @@ public class Controller {
 
     //绑定通用事件
     private void _BindEvents() {
-
+        BindEvent(EventType.OnViewLoaded, (string name) => {
+            Debug.Log(name + " has loaded");
+        });
     }
 
-    //解绑通用事件
-    private void _UnbindEvents() {
+    //解绑通用事件(统一解绑)
+    // private void _UnbindEvents() {
 
-    }
+    // }
 }
 

@@ -100,7 +100,7 @@ public class GameDatabase {
     public void Dispose() {
         configdatabases.Clear();
         playerDatabases.Clear();
-        registeredKeys = null;
+        registeredKeys?.Clear();
     }
 
     // private string ResolveDefaultPlayerId()
