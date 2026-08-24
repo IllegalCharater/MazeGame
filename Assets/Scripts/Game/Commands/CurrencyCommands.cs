@@ -38,7 +38,7 @@ public sealed class ChangeCurrency : ICommand {
         // Debug.Log("execute command " + _currency + changeType);
 
         //派发事件
-        GameContext.Instance.DispatchEvent(EventType.CurrencyChanged, new object[] { _currency });
+        GameContext.DispatchEvent(EventType.CurrencyChanged, new object[] { _currency });
         return Task.FromResult(CommandResult.Succeeded("Currency Changed.", _currency));
     }
 }

@@ -1,24 +1,21 @@
 using System.Collections.Generic;
 
-public class PlayerInventory {
-    public string playerId = "unknown";
-    private Dictionary<string, int> items = new Dictionary<string, int>();
+public class PlayerInventory : BaseData {
+    private string playerId = "unknown";
+    private Dictionary<string, int> items;
 
     public void Init(string playerId) {
         this.playerId = playerId;
-        items.Clear();
-        //背包数据初始化（配置表为通用行，直接按列名读取）
-        ConfigData _data = GameDatabase.Instance.Get("player_start", this.playerId);
+        items = new();
+    }
+    protected override void LoadConfigData() {
+        var _data = configs["player_start"].GetData(playerId);
         if (_data != null)
             items = _data.Get("items", items);
     }
-
-    public void UpdateData(DataBag newdata) {
-        string _id = newdata.Get("playerId", playerId);
-        if (_id != playerId) {
-            playerId = _id;
-        }
-        Dictionary<string, int> _items = newdata.Get("items", items);
+    protected override void LoadUpdateData() {
+        // string _id = databag.Get("playerId", playerId);
+        Dictionary<string, int> _items = databag.Get("items", items);
         DataBagHelper.UpdateDictionary(ref items, _items);
     }
 

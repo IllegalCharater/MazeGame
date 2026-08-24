@@ -1,6 +1,3 @@
-using System;
-using System.Collections.Generic;
-
 public class UIConfig {
     public static string PrefabDir = "Assets/UI/Prefabs";
 

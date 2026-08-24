@@ -144,7 +144,7 @@ public class Model : IDisposable {
     }
 
     public ConfigData GetConfigData(string rootKey, string id) {
-        return GameDatabase.Instance.Get(rootKey, id);
+        return GameDatabase.GetConfigData(rootKey, id);
     }
 
     public PlayerDatabase GetPlayerData() {

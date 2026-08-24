@@ -1,8 +1,8 @@
 using UnityEngine;
 
 [System.Serializable]
-public class PlayerProfile {
-    public string playerId;
+public class PlayerProfile : BaseData {
+    private string playerId;
     public string playerDisplayName;
     public int currency;
     public int maxCurrency = 100;
@@ -13,11 +13,10 @@ public class PlayerProfile {
 
     public void Init(string playerId) {
         this.playerId = playerId;
-        ConfigData _data = GameDatabase.Instance.Get("player_start", this.playerId);
-        if (_data == null) {
-            Debug.LogWarning($"[PlayerProfile] player_start row not found: {playerId}");
-            return;
-        }
+    }
+    protected override void LoadConfigData() {
+        var config = configs["player_start"];
+        var _data = config.GetData(playerId);
         playerDisplayName = _data.Get("playerDisplayName", playerDisplayName);
         currency = _data.Get("currency", currency);
         maxCurrency = _data.Get("maxCurrency", maxCurrency);
@@ -27,24 +26,24 @@ public class PlayerProfile {
         equippedOutfitId = _data.Get("equippedOutfitId", equippedOutfitId);
     }
 
-    public void UpdateData(DataBag newdata) {
-        string _id = newdata.Get("playerId", "");
-        if (_id != "") {
-            playerId = _id;
-        }
-        string _name = newdata.Get("playerDisplayName", "");
+    protected override void LoadUpdateData() {
+        // string _id = databag.Get("playerId", "");
+        // if (_id != "") {
+        //     playerId = _id;
+        // }
+        string _name = databag.Get("playerDisplayName", "");
         if (_name != "") {
             playerDisplayName = _name;
         }
-        int _currency = newdata.Get("currency", currency);
+        int _currency = databag.Get("currency", currency);
         if (_currency != currency) {
             currency = _currency;
         }
-        int _energy = newdata.Get("energy", energy);
+        int _energy = databag.Get("energy", energy);
         if (_energy != energy) {
             energy = _energy;
         }
-        int _level = newdata.Get("level", level);
+        int _level = databag.Get("level", level);
         if (_level != level) {
             level = _level;
         }

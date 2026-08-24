@@ -28,7 +28,7 @@ public sealed class GameManager : MonoBehaviour {
         gameDatabase = GameDatabase.GetInstance();
         gameDatabase.Init();
 
-        gamecontext = new GameContext();
+        gamecontext = GameContext.GetInstance();
         gamecontext.Init();
 
         timer = new GameTimer();
@@ -46,10 +46,8 @@ public sealed class GameManager : MonoBehaviour {
         sceneFlowManager = SceneFlowManager.GetInstance();
         sceneFlowManager.Init();
         //绑定全局指令和事件
-        var context = GameContext.Instance;
         //全局指令
-        var command = new ChangeCurrency();
-        context.AddCommand(command);
+        GameContext.AddCommand(new ChangeCurrency());
 
         //全局事件
         // context.AddEvent(EventType.CurrencyChanged, (amount) => { context.Execute(CommandType.ChangeCurrency, new DataBag().Set("amount", amount)); });会导致循环引用
