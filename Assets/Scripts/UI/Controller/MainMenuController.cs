@@ -1,4 +1,6 @@
 public class MainMenuController : Controller {
+    MainMenuView view => _view as MainMenuView;
+
     public override void OnOpenView() {
 
     }
@@ -6,10 +8,8 @@ public class MainMenuController : Controller {
 
     }
     protected override void BindEvents() {
-        var _view = view as MainMenuView;
-
-        BindClickEvent(_view.MazeEntry, GotoMaze);
-        BindClickEvent(_view.KitchenEntry, GotoKitchen);
+        BindClickEvent(view.MazeEntry, GotoMaze);
+        BindClickEvent(view.KitchenEntry, GotoKitchen);
     }
 
     void GotoMaze() {

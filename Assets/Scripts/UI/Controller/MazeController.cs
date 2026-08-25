@@ -1,17 +1,15 @@
 using UnityEngine;
 
 public class MazeController : Controller {
-
+    MazeView view => _view as MazeView;
     protected override void BindEvents() {
-        var _view = view as MazeView;
         // Debug.Log("node name" + _view.mazeNodes[3].name);
-        BindClickEvent(_view.mazeNodes[3], nodeFucTest);
-        BindClickEvent(_view.mazeNodes[15], () => {
-            UIManager.CloseView(model.viewName);
-        });
+        BindClickEvent(view.puzzle_1, EnterPuzzle1);
+        BindClickEvent(view.Exit, Dispose);
     }
-    void nodeFucTest() {
-        ExecuteCommand(CommandType.ChangeCurrency, new DataBag { { "type", "add" }, { "amount", 2 } });
+    void EnterPuzzle1() {
+        // ExecuteCommand(CommandType.ChangeCurrency, new DataBag { { "type", "add" }, { "amount", 2 } });
+        _ = UIManager.GotoView("MazePuzzleItemSocket");
     }
     public MazeController(Model model, View view) : base(model, view) {
     }

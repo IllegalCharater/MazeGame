@@ -3,10 +3,14 @@ using UnityEngine;
 
 public class MazeView : View {
 
-    public List<GameObject> mazeNodes;
+    private List<GameObject> mazeNodes;
+    public GameObject puzzle_1;
+    public GameObject Exit;
 
     protected override void BindViewUI() {
         GameObject nodesRoot = GetChildByPath("MazeMapRoot/MazeNodeRoot");
         mazeNodes = nodesRoot.GetChildren();
+        puzzle_1 = mazeNodes[3];
+        Exit = mazeNodes[15];
     }
 }

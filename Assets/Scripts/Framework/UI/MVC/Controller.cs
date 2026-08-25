@@ -13,20 +13,20 @@ public enum ViewState {
 
 public class Controller {
 
-    protected Model model { get; private set; }
-    protected View view { get; private set; }
+    protected Model _model { get; private set; }
+    protected View _view { get; private set; }
 
     protected DataBag _data;
 
     public Controller(Model model, View view) {
-        this.model = model;
-        this.view = view;
+        this._model = model;
+        this._view = view;
     }
     //初始化
     public virtual void Initialize() {
-        if (model.HasInputBlocker) {
+        if (_model.HasInputBlocker) {
             //创建输入拦截器
-            UIManager.Instance.EnsureInputBlocker(model.viewName);
+            UIManager.Instance.EnsureInputBlocker(_model.viewName);
         }
     }
 
@@ -35,16 +35,16 @@ public class Controller {
         _OnOpen();
         //向model和view分发数据，自动化刷新逻辑在model和view中重写
         //加载初始化数据（从model和传入的参数中获得）
-        model.UpdateData(_data);
+        _model.UpdateData(_data);
         //拼装传入view的参数
-        view.BindUI();
-        view.UpdateData(_data);
+        _view.BindUI();
+        _view.UpdateData(_data);
 
         OnOpenView();
         _BindEvents();
         BindEvents();
-        model.state = ViewState.Opened;
-        ExecuteCommand(CommandType.AfterViewLoaded, new DataBag { { "ViewName", model.viewName } });
+        _model.state = ViewState.Opened;
+        ExecuteCommand(CommandType.AfterViewLoaded, new DataBag { { "ViewName", _model.viewName } });
     }
 
     public virtual void OnOpenView() {
@@ -63,14 +63,14 @@ public class Controller {
     public void OnRefresh() {
         _OnRefresh();
         OnViewRefresh();
-        model.state = ViewState.Opened;
+        _model.state = ViewState.Opened;
     }
     public virtual void OnViewRefresh() {
 
     }
     //ui隐藏时调用
     public void OnHide() {
-        model.state = ViewState.Hidden;
+        _model.state = ViewState.Hidden;
         _OnHide();
         OnViewHide();
     }
@@ -104,56 +104,56 @@ public class Controller {
     }
     // 触发事件（带参数）
     public void DispatchEvent<T>(EventType eventType, T payload) {
-        model.DispatchEvent(eventType, payload);
+        _model.DispatchEvent(eventType, payload);
     }
     // 触发事件（无参数）
     public void DispatchEvent(EventType eventType) {
-        model.DispatchEvent(eventType);
+        _model.DispatchEvent(eventType);
     }
     // 执行指令（返回结果，可 await 或忽略）
     public Task<CommandResult> ExecuteCommand(CommandType commandType, DataBag payload = null) {
-        return model.ExecuteCommand(commandType, payload);
+        return _model.ExecuteCommand(commandType, payload);
     }
     // 订阅专门事件,点击事件
     protected virtual void BindEvents() { }
     //事件相关操作
     protected void BindEvent(EventType eventType, Action action) {
-        model.AddEvent(eventType, action);
+        _model.AddEvent(eventType, action);
     }
     protected void BindEvent<T>(EventType eventType, Action<T> action) {
-        model.AddEvent(eventType, action);
+        _model.AddEvent(eventType, action);
     }
     protected void UnbindEvent(EventType eventType, Action action) {
-        model.RemoveEvent(eventType, action);
+        _model.RemoveEvent(eventType, action);
     }
     protected void UnbindEvent<T>(EventType eventType, Action<T> action) {
-        model.RemoveEvent(eventType, action);
+        _model.RemoveEvent(eventType, action);
     }
 
     //绑定按钮点击事件
     protected void BindClickEvent(Button button, UnityAction action) {
-        model.AddClickEvent(button, action);
+        _model.AddClickEvent(button, action);
     }
     protected void BindClickEvent(GameObject obj, UnityAction action) {
         var button = obj.GetComponent<Button>();
         if (!button) {
             Debug.LogWarning("button component is not exist");
         }
-        model.AddClickEvent(obj.GetComponent<Button>(), action);
+        _model.AddClickEvent(obj.GetComponent<Button>(), action);
     }
     protected void BindClickEvent(string path, UnityAction action) {
-        Button button = view.GetChildByPath(path).GetComponent<Button>();
+        Button button = _view.GetChildByPath(path).GetComponent<Button>();
         if (!button) Debug.LogWarning("button is not exist");
-        model.AddClickEvent(button, action);
+        _model.AddClickEvent(button, action);
     }
 
     protected void UnbindClickEvent(Button button) {
-        model.RemoveClickEvent(button);
+        _model.RemoveClickEvent(button);
     }
 
     //获得配置表数据
     protected ConfigData GetConfigData(string rootKey, string id) {
-        return model.GetConfigData(rootKey, id);
+        return _model.GetConfigData(rootKey, id);
     }
 
     //通用流程
@@ -168,18 +168,18 @@ public class Controller {
     private void _OnClose() {
 
         // _UnbindEvents();
-        model?.Dispose();
-        view?.Destroy();
+        _model?.Dispose();
+        _view?.Destroy();
     }
     private void _OnRefresh() {
-        model.UpdateData(_data);
-        view.UpdateData(_data);
+        _model.UpdateData(_data);
+        _view.UpdateData(_data);
 
-        view.root.SetActive(true);
-        view.root.transform.SetAsLastSibling();
+        _view.root.SetActive(true);
+        _view.root.transform.SetAsLastSibling();
     }
     private void _OnHide() {
-        view.root.SetActive(false);
+        _view.root.SetActive(false);
     }
 
     //绑定通用事件
@@ -191,5 +191,9 @@ public class Controller {
     // private void _UnbindEvents() {
 
     // }
+
+    protected void Dispose() {
+        UIManager.CloseView(_view.name);
+    }
 }
 

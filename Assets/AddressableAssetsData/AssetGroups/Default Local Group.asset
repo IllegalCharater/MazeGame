@@ -38,7 +38,7 @@ MonoBehaviour:
     m_ReadOnly: 0
     m_SerializedLabels: []
   - m_GUID: 21180726ce3e6684da8e52e78372cbff
-    m_Address: Assets/UI/Prefabs/MazePuzzleItemSocketUI.prefab
+    m_Address: Assets/UI/Prefabs/MazePuzzleItemSocket.prefab
     m_ReadOnly: 0
     m_SerializedLabels: []
   - m_GUID: a26d35a1303ab754897716f71adc8c33
