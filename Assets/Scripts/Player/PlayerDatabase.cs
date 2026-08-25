@@ -28,10 +28,8 @@ public class PlayerDatabase : BaseData {
     protected override void LoadUpdateData() {
         PlayerInventory _inventory = databag.Get("Inventory", Inventory);
         PlayerProfile _profile = databag.Get("Profile", Profile);
-        // PlayerCollections _collections = databag.Get("Collections", Collections);
         Inventory.UpdateData(new DataBag().FromObject(_inventory));
         Profile.UpdateData(new DataBag().FromObject(_profile));
-        // Collections.UpdateData(new DataBag().FromObject(_collections));
     }
 
 }

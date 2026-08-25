@@ -25,6 +25,11 @@ public class UIManager {
     // 防止同一个界面在异步加载过程中被重复打开，并让后续 await 调用拿到同一个结果。
     private readonly Dictionary<string, Task<UIEntry>> loadingViewTasks = new Dictionary<string, Task<UIEntry>>();
 
+    // 全局触摸屏蔽遮罩（置于 TopLayer 顶层，加载 UI 时使用）
+    private GameObject globalInputBlocker;
+    // 屏蔽引用计数：支持并发加载时互相等待，计数归零才销毁遮罩
+    private int globalBlockCount;
+
     private GameObject uiRoot;
 
     private UIManager() { }
@@ -116,9 +121,8 @@ public class UIManager {
     }
 
     private async Task<UIEntry> gotoView(string viewName, DataBag options = null) {
-
+        BlockInput(); // 加载开始：屏蔽全局触摸
         UIEntry entry;
-
         if (loadingViewTasks.TryGetValue(viewName, out Task<UIEntry> loadingTask)) {
             Debug.LogWarning($"[UIManager] UI is already loading: {viewName}");
             return await loadingTask;
@@ -141,6 +145,7 @@ public class UIManager {
             if (loadingViewTasks.TryGetValue(viewName, out Task<UIEntry> currentTask) && currentTask == openTask) {
                 loadingViewTasks.Remove(viewName);
             }
+            UnblockInput(); // 加载结束（成功/失败）：恢复全局触摸
         }
     }
 
@@ -194,10 +199,10 @@ public class UIManager {
 
     private void ensureUILayers() {
         if (uiRoot == null)
-            uiRoot = GameObject.Find(UIConfig.RootName);
+            uiRoot = GameObject.Find(UIConfig.Root);
 
         if (uiRoot == null) {
-            uiRoot = new GameObject(UIConfig.RootName, typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
+            uiRoot = new GameObject(UIConfig.Root, typeof(RectTransform), typeof(Canvas), typeof(CanvasScaler), typeof(GraphicRaycaster));
             UnityEngine.Object.DontDestroyOnLoad(uiRoot);
         }
 
@@ -224,11 +229,11 @@ public class UIManager {
             rootRect.offsetMax = Vector2.zero;
         }
 
-        EnsureLayer(UIConfig.BackgroundLayerName);
-        EnsureLayer(UIConfig.NormalLayerName);
-        EnsureLayer(UIConfig.PopupLayerName);
-        EnsureLayer(UIConfig.TopLayerName);
-        EnsureLayer(UIConfig.ToastLayerName);
+        EnsureLayer(UIConfig.BackgroundLayer);
+        EnsureLayer(UIConfig.NormalLayer);
+        EnsureLayer(UIConfig.PopupLayer);
+        EnsureLayer(UIConfig.TopLayer);
+        EnsureLayer(UIConfig.ToastLayer);
         EnsureEventSystem();
     }
 
@@ -258,7 +263,7 @@ public class UIManager {
 
     private Transform GetLayer(string layerName) {
         if (string.IsNullOrEmpty(layerName))
-            layerName = UIConfig.NormalLayerName;
+            layerName = UIConfig.NormalLayer;
 
         return EnsureLayer(layerName);
     }
@@ -441,45 +446,53 @@ public class UIManager {
     public void EnsureInputBlocker(string viewName) {
         UIEntry entry = GetLoadedView(viewName);
         if (entry != null) {
-            ensureInputBlocker(entry.view.root);
+            if (entry.view.root != null) {
+                GameObject blocker = UIHelper.GetInputBlocker(entry.view.root);
+                blocker.transform.SetAsFirstSibling();
+                blocker.SetActive(true);
+            }
         }
     }
 
-    private void ensureInputBlocker(GameObject view) {
-        if (view == null)
-            return;
-
-        RectTransform parentRect = view.transform as RectTransform;
-        if (parentRect == null)
-            return;
-
-        Transform existing = view.transform.Find("UIInputBlocker");
-        GameObject blocker = existing != null ? existing.gameObject : null;
-        if (blocker == null) {
-            blocker = new GameObject("UIInputBlocker", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
-            blocker.transform.SetParent(view.transform, false);
-        }
-
-        RectTransform rect = blocker.transform as RectTransform;
-        if (rect != null) {
-            rect.anchorMin = Vector2.zero;
-            rect.anchorMax = Vector2.one;
-            rect.anchoredPosition = Vector2.zero;
-            rect.offsetMin = Vector2.zero;
-            rect.offsetMax = Vector2.zero;
-            rect.localScale = Vector3.one;
-        }
-
-        Image image = blocker.GetComponent<Image>();
-        if (image != null) {
-            image.color = new Color(0f, 0f, 0f, 0.001f);
-            image.raycastTarget = true;
-        }
-
-        blocker.transform.SetAsFirstSibling();
-        blocker.SetActive(true);
+    /// <summary>
+    /// 屏蔽全局触摸输入（计数 +1，首次创建遮罩）。
+    /// </summary>
+    public void BlockInput() {
+        globalBlockCount++;
+        if (globalBlockCount == 1)
+            ensureGlobalInputBlocker();
+        else if (globalInputBlocker != null)
+            globalInputBlocker.transform.SetAsLastSibling();
     }
 
+    /// <summary>
+    /// 恢复全局触摸输入（计数 -1，归零时销毁遮罩）。
+    /// </summary>
+    public void UnblockInput() {
+        if (globalBlockCount <= 0)
+            return;
+
+        globalBlockCount--;
+        if (globalBlockCount == 0 && globalInputBlocker != null) {
+            // UnityEngine.Object.Destroy(globalInputBlocker);
+            // globalInputBlocker = null;
+            globalInputBlocker.SetActive(false);
+        }
+    }
+
+    private void ensureGlobalInputBlocker() {
+        // 被外部销毁时 Unity 判空会得到假 null，直接用 == 判断即可自动重建
+        if (globalInputBlocker != null) {
+            globalInputBlocker.SetActive(true);
+            return;
+        }
+
+        GameObject blocker = UIHelper.GetInputBlocker(layers[UIConfig.TopLayer].gameObject);
+
+        // 置于顶层，拦截所有射线
+        blocker.transform.SetAsLastSibling();
+        globalInputBlocker = blocker;
+    }
 
     public void Dispose() {
         CloseAll();

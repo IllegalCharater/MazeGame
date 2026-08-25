@@ -56,4 +56,36 @@ public static class UIHelper {
 
         clickActions.Clear();
     }
+
+    public static GameObject GetInputBlocker(GameObject parent) {
+        RectTransform parentRect = parent.transform as RectTransform;
+        if (parentRect == null)
+            return null;
+
+        Transform existing = parent.transform.Find("UIInputBlocker");
+        GameObject blocker = existing != null ? existing.gameObject : null;
+        if (blocker == null) {
+            blocker = new GameObject("UIInputBlocker", typeof(RectTransform), typeof(CanvasRenderer), typeof(Image));
+            blocker.transform.SetParent(parent.transform, false);
+        }
+
+        RectTransform rect = blocker.transform as RectTransform;
+        if (rect != null) {
+            rect.anchorMin = Vector2.zero;
+            rect.anchorMax = Vector2.one;
+            rect.anchoredPosition = Vector2.zero;
+            rect.offsetMin = Vector2.zero;
+            rect.offsetMax = Vector2.zero;
+            rect.localScale = Vector3.one;
+        }
+
+        Image image = blocker.GetComponent<Image>();
+        if (image != null) {
+            image.color = new Color(0f, 0f, 0f, 0.001f);
+            image.raycastTarget = true;
+        }
+
+        return blocker;
+    }
+
 }

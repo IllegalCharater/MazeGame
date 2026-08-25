@@ -6,13 +6,15 @@ public readonly partial struct CommandType {
     // ---- 玩家数据（自动自增，从 1000 起）----
     public static readonly CommandType ChangeCurrency = Next();   // 修改货币数量
 }
-public sealed class ChangeCurrency : ICommand {
+public sealed class ChangeCurrencyCommand : ICommand {
     public CommandType Type => CommandType.ChangeCurrency;
     // payload：改变金币数量（amount）
     public Task<CommandResult> Handle(DataBag payload = null) {
+        if (payload == null) return Task.FromResult(CommandResult.Failed("lack of params"));
         // string playerId = payload.Get("playerId", "");
         string changeType = payload.Get<string>("type", null);
-        int amount = payload.Get("amount", 0);
+        int amount = payload.Get("amount", -1);
+        if (changeType == null || amount == -1) return Task.FromResult(CommandResult.Failed("lack of params"));
         var profile = GameDatabase.Instance.GetPlayerData().Profile;
 
         int _currency = profile.currency;

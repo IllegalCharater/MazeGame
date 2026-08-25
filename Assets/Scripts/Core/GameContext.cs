@@ -31,8 +31,14 @@ public sealed class GameContext {
     public static void AddEvent(EventType eventType, Action action) {
         Instance.context.BindEvent(eventType, action);
     }
-    public static void AddEvent(EventType eventType, Action<object> action) {
+    // public static void AddEvent(EventType eventType, Action<object> action) {
+    //     Instance.context.BindEvent(eventType, action);
+    // }
+    public static void AddEvent<T>(EventType eventType, Action<T> action) {
         Instance.context.BindEvent(eventType, action);
+    }
+    public static void AddEvent(EventType parentEvent, EventType childEvent) {
+        Instance.context.BindEvent(parentEvent, childEvent);
     }
     // 通用入口：支持任意签名（method group / 已实例化委托）
     public static void AddEvent(EventType eventType, Delegate action) {
@@ -40,6 +46,12 @@ public sealed class GameContext {
     }
 
     public static void RemoveEvent(EventType eventType, Delegate action) {
+        Instance.context.UnbindEvent(eventType, action);
+    }
+    public static void RemoveEvent(EventType parentEvent, EventType childEvent) {
+        Instance.context.UnbindEvent(parentEvent, childEvent);
+    }
+    public static void RemoveEvent<T>(EventType eventType, Action<T> action) {
         Instance.context.UnbindEvent(eventType, action);
     }
 

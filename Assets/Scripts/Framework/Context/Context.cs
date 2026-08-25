@@ -24,11 +24,23 @@ public class Context : IDisposable {
 
         events?.Subscribe(eventType, action);
     }
+    public void BindEvent(EventType parentEvent, EventType childEvent) {
+        if (parentEvent == null || childEvent == null)
+            return;
+
+        events?.Subscribe(parentEvent, childEvent);
+    }
     public void UnbindEvent(EventType eventType, Delegate action) {
         if (action == null)
             return;
 
         events?.Unsubscribe(eventType, action);
+    }
+    public void UnbindEvent(EventType parentEvent, EventType childEvent) {
+        if (parentEvent == null || childEvent == null)
+            return;
+
+        events?.Unsubscribe(parentEvent, childEvent);
     }
 
     public void BindCommand(ICommand command) {

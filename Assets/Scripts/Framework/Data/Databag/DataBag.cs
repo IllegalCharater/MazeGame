@@ -129,50 +129,50 @@ public class DataBag : IEnumerable<KeyValuePair<string, object>> {
     }
 }
 
-public static class DataBagBinder {
-    // 缓存：View 类型 -> 绑定的字段列表
-    private static Dictionary<Type, List<FieldInfo>> _cache = new();
+// public static class DataBagBinder {
+//     // 缓存：View 类型 -> 绑定的字段列表
+//     private static Dictionary<Type, List<FieldInfo>> _cache = new();
 
-    public static void BindFromDataBag(this MonoBehaviour view, DataBag data) {
-        if (data == null) return;
+//     public static void BindFromDataBag(this MonoBehaviour view, DataBag data) {
+//         if (data == null) return;
 
-        Type type = view.GetType();
-        if (!_cache.TryGetValue(type, out var fields)) {
-            fields = new List<FieldInfo>();
-            // 获取所有实例字段（含私有，但要标记 DataBind）
-            var allFields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
-            foreach (var field in allFields) {
-                if (Attribute.IsDefined(field, typeof(DataBindAttribute)))
-                    fields.Add(field);
-            }
-            _cache[type] = fields;
-        }
+//         Type type = view.GetType();
+//         if (!_cache.TryGetValue(type, out var fields)) {
+//             fields = new List<FieldInfo>();
+//             // 获取所有实例字段（含私有，但要标记 DataBind）
+//             var allFields = type.GetFields(BindingFlags.Instance | BindingFlags.Public | BindingFlags.NonPublic);
+//             foreach (var field in allFields) {
+//                 if (Attribute.IsDefined(field, typeof(DataBindAttribute)))
+//                     fields.Add(field);
+//             }
+//             _cache[type] = fields;
+//         }
 
-        // 遍历字段，从 DataBag 中取值并赋值
-        foreach (var field in fields) {
-            // 获取特性中指定的键名，如果没有则使用字段名
-            var attr = field.GetCustomAttribute<DataBindAttribute>();
-            string key = string.IsNullOrEmpty(attr?.SourceField) ? field.Name : attr.SourceField;
+//         // 遍历字段，从 DataBag 中取值并赋值
+//         foreach (var field in fields) {
+//             // 获取特性中指定的键名，如果没有则使用字段名
+//             var attr = field.GetCustomAttribute<DataBindAttribute>();
+//             string key = string.IsNullOrEmpty(attr?.SourceField) ? field.Name : attr.SourceField;
 
-            // 从 DataBag 中取值（带类型转换）
-            if (data.TryGet(field.FieldType, key, out object value)) {
-                field.SetValue(view, value);
-            }
-        }
-    }
-}
+//             // 从 DataBag 中取值（带类型转换）
+//             if (data.TryGet(field.FieldType, key, out object value)) {
+//                 field.SetValue(view, value);
+//             }
+//         }
+//     }
+// }
 
-/// <summary>
-/// 标记字段/属性，表示它可以从数据源（DataBag 或 DTO）自动获取值
-/// </summary>
-[AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, Inherited = true)]
-public sealed class DataBindAttribute : Attribute {
-    /// <summary>
-    /// 数据源中的键名/字段名。如果为 null，则使用目标字段名作为键名。
-    /// </summary>
-    public string SourceField { get; }
+// /// <summary>
+// /// 标记字段/属性，表示它可以从数据源（DataBag 或 DTO）自动获取值
+// /// </summary>
+// [AttributeUsage(AttributeTargets.Field | AttributeTargets.Property, Inherited = true)]
+// public sealed class DataBindAttribute : Attribute {
+//     /// <summary>
+//     /// 数据源中的键名/字段名。如果为 null，则使用目标字段名作为键名。
+//     /// </summary>
+//     public string SourceField { get; }
 
-    public DataBindAttribute(string sourceField = null) {
-        SourceField = sourceField;
-    }
-}
+//     public DataBindAttribute(string sourceField = null) {
+//         SourceField = sourceField;
+//     }
+// }

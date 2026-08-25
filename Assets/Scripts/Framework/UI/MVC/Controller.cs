@@ -44,7 +44,7 @@ public class Controller {
         _BindEvents();
         BindEvents();
         model.state = ViewState.Opened;
-        DispatchEvent(EventType.OnViewLoaded, model.viewName);
+        ExecuteCommand(CommandType.AfterViewLoaded, new DataBag { { "ViewName", model.viewName } });
     }
 
     public virtual void OnOpenView() {
@@ -184,9 +184,7 @@ public class Controller {
 
     //绑定通用事件
     private void _BindEvents() {
-        BindEvent(EventType.OnViewLoaded, (string name) => {
-            Debug.Log(name + " has loaded");
-        });
+
     }
 
     //解绑通用事件(统一解绑)

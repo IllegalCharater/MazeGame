@@ -17,9 +17,9 @@ public sealed class Injector {
     }
     private Injector() { }
     // ---------- 原有实例缓存（单例/已注册实例） ----------
-    private readonly Dictionary<Type, object> singletonInstances = new Dictionary<Type, object>();
+    private readonly Dictionary<Type, object> singletonInstances = new();
     // ---------- 新增：类型映射（类型 -> 如何创建） ----------
-    private readonly Dictionary<Type, Func<object>> typeCreators = new Dictionary<Type, Func<object>>();
+    private readonly Dictionary<Type, Func<object>> typeCreators = new();
     private readonly Dictionary<Type, Func<object[], object>> argCreators = new();
     // ---------- 生命周期选项 ----------
     public enum Lifecycle {
@@ -172,5 +172,6 @@ public sealed class Injector {
     public void Clear() {
         singletonInstances.Clear();
         typeCreators.Clear();
+        argCreators.Clear();
     }
 }

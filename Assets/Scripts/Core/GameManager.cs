@@ -47,15 +47,26 @@ public sealed class GameManager : MonoBehaviour {
         sceneFlowManager.Init();
         //绑定全局指令和事件
         //全局指令
-        GameContext.AddCommand(new ChangeCurrency());
+        InitCommands();
 
         //全局事件
-        // context.AddEvent(EventType.CurrencyChanged, (amount) => { context.Execute(CommandType.ChangeCurrency, new DataBag().Set("amount", amount)); });会导致循环引用
+        InitEvents();
 
         //初始化游戏场景
         sceneFlowManager.GoToMain();
         _ = UIManager.GotoView("HUD");
     }
+    void InitCommands() {
+        GameContext.AddCommand(new ChangeCurrencyCommand());
+        GameContext.AddCommand(new AfterViewCommand());
+    }
+
+    void InitEvents() {
+        // GameContext.AddEvent(EventType.OnViewLoaded, (string name) => {
+        //     Debug.Log(name + " has loaded");
+        // });
+    }
+
     private void Update() {
         float deltaTime = Time.deltaTime;
         timer?.Tick(deltaTime);
@@ -74,76 +85,4 @@ public sealed class GameManager : MonoBehaviour {
         sceneFlowManager?.Dispose();
         Instance = null;
     }
-
-    // public void SetGameState(GameState next) {
-    //     if (CurrentState == next)
-    //         return;
-
-    //     GameState prev = CurrentState;
-    //     CurrentState = next;
-    //     GameEvents.RaiseGameStateChanged(prev, next);
-    // }
-
-    //     public bool TryAddCurrency(string playerId, int amount) {
-    //         if (amount < 0)
-    //             return false;
-
-    //         if (!TryGetProfile(playerId, out PlayerProfile profile))
-    //             return false;
-
-    //         var currency = profile.currency;
-    //         long next = (long)currency + amount;
-    //         if (next > int.MaxValue)
-    //             return false;
-
-    //         SetCurrency(playerId, (int)next);
-    //         return true;
-    //     }
-
-    //     public bool TrySpendCurrency(string playerId, float amount) {
-    //         if (!TryGetProfile(playerId, out PlayerProfile profile))
-    //             return false;
-
-    //         var currency = profile.currency;
-    //         if (amount < 0 || currency < amount)
-    //             return false;
-
-    //         SetCurrency(playerId, currency - amount);
-    //         return true;
-    //     }
-
-    //     public void SetCurrency(float value) {
-    //         if (gameDatabase?.GetPlayerData() == null)
-    //             return;
-
-    //         SetCurrency(gameDatabase.GetPlayerData().playerId, value);
-    //     }
-
-    //     private void SetCurrency(string playerId, float value) {
-    //         if (!TryGetProfile(playerId, out PlayerProfile profile))
-    //             return;
-
-    //         int currency = Mathf.Max(0, Mathf.FloorToInt(value));
-    //         profile.currency = currency;
-    //         GameEvents.RaiseCurrencyChanged(currency);
-    //     }
-
-    //     private bool TryGetProfile(string playerId, out PlayerProfile profile) {
-    //         profile = null;
-    //         if (gameDatabase == null || string.IsNullOrEmpty(playerId))
-    //             return false;
-    //         if (!gameDatabase.playerDatabases.TryGetValue(playerId, out PlayerDatabase player) || player == null)
-    //             return false;
-
-    //         profile = player.profile;
-    //         return profile != null;
-    //     }
-
-    // #if UNITY_EDITOR
-    //     private void OnValidate() {
-    //         // currency = Mathf.Max(0, currency);
-    //         // if (Application.isPlaying && Instance == this)
-    //         //     SetCurrency(currency);
-    //     }
-    // #endif
 }

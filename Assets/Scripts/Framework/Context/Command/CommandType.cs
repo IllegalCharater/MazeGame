@@ -10,12 +10,12 @@ public readonly partial struct CommandType : IEquatable<CommandType> {
 
     public readonly int Value;
 
-    public CommandType(int value) {
+    private CommandType(int value) {
         Value = value;
     }
 
     /// <summary>创建下一个自动自增的指令键。</summary>
-    public static CommandType Next() => new CommandType(_nextValue++);
+    private static CommandType Next() => new CommandType(_nextValue++);
 
     public bool Equals(CommandType other) => Value == other.Value;
     public override bool Equals(object obj) => obj is CommandType other && Equals(other);

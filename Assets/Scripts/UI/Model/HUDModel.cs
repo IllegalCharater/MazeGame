@@ -1,5 +1,5 @@
 public class HUDModel : Model {
-    public override string Layer => UIConfig.TopLayerName;
+    public override string Layer => UIConfig.TopLayer;
     public string playerName;
     public int playerLevel;
     public int playerExp;

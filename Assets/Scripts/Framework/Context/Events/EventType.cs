@@ -15,12 +15,12 @@ public readonly partial struct EventType : IEquatable<EventType> {
 
     public readonly int Value;
 
-    public EventType(int value) {
+    private EventType(int value) {
         Value = value;
     }
 
     /// <summary>创建下一个自动自增的事件键。</summary>
-    public static EventType Next() => new EventType(_nextValue++);
+    private static EventType Next() => new EventType(_nextValue++);
 
     public bool Equals(EventType other) => Value == other.Value;
     public override bool Equals(object obj) => obj is EventType other && Equals(other);

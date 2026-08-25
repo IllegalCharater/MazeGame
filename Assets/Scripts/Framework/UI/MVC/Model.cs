@@ -8,7 +8,7 @@ public class Model : IDisposable {
     public Context context { get; private set; }
     public string viewName;
     public ViewState state;
-    public virtual string Layer => UIConfig.NormalLayerName;
+    public virtual string Layer => UIConfig.NormalLayer;
     public virtual bool HasInputBlocker => false;
 
     //预留接口,当ui挂载在动态加载场景中时，为真切换场景保留此ui
