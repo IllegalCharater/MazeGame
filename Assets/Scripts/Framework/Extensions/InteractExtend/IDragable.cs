@@ -16,11 +16,14 @@ public class IDragable : MonoBehaviour, Interactable, IBeginDragHandler, IDragHa
     private RectTransform rectTransform;
     private Vector2 originalLocalPointerPosition;
     private Vector2 homePosition;          // 本次拖拽起点（松手未吸附时回弹到此）
+    private Vector3 homeWorldPosition;   // 原点世界坐标快照（Init 时记录，用于与槽位做距离比较）
     private List<RectTransform> _points = new();
 
     public void Init(DataBag options = null) {
         rectTransform = GetComponent<RectTransform>();
         homePosition = rectTransform.anchoredPosition;
+        // 固定记录"原本的位置"：吸附点比较的是这个快照，而不是会跟着拖拽移动的 rectTransform 本身
+        homeWorldPosition = rectTransform.position;
         if (options != null) {
             _points = options.Get("points", _points);
             restrictToParent = options.Get("restrictToParent", restrictToParent);
@@ -76,11 +79,15 @@ public class IDragable : MonoBehaviour, Interactable, IBeginDragHandler, IDragHa
 
     public void OnEndDrag(PointerEventData eventData) {
         //结束时自动吸附最近的位置
-        RectTransform nearest = FindNearestSnapPoint();
+        RectTransform nearest = FindNearestSnapPoint(out bool snapToOrigin);
         if (nearest != null) {
             // 槽位可能挂在嵌套容器（如 Slots）下，父级不同直接赋 anchoredPosition 会偏移；
             // 改为把槽位的世界坐标换算成物品父节点坐标再对齐
             rectTransform.anchoredPosition = WorldToAnchoredPosition(nearest.position);
+        }
+        else if (snapToOrigin) {
+            // 离原点最近：吸回原本的位置
+            rectTransform.anchoredPosition = homePosition;
         }
         else {
             // 未命中任何吸附点，回弹到拖拽起点
@@ -106,18 +113,17 @@ public class IDragable : MonoBehaviour, Interactable, IBeginDragHandler, IDragHa
         return worldPoint;
     }
 
-    /// <summary>在吸附容器内寻找距离自身最近的吸附点；超过 snapRadius 则返回 null。</summary>
-    private RectTransform FindNearestSnapPoint() {
-        // 优先使用 Init 注入的吸附点（槽位列表）；为空时才回退扫描节点下的所有 RectTransform
-        if (_points.Count == 0) {
-            Transform root = snapContainer != null ? snapContainer : rectTransform.parent;
-            if (root == null) return null;
-            root.GetComponentsInChildren(true, _points);
-        }
-        if (_points.Count == 0) return null;
-
+    /// <summary>寻找距离自身最近的吸附点（槽位 + 自身原点）；超过 snapRadius 则返回 null。</summary>
+    private RectTransform FindNearestSnapPoint(out bool snapToOrigin) {
+        snapToOrigin = false;
         RectTransform nearest = null;
         float minSqrDist = float.MaxValue;
+
+        // 候选1：槽位吸附点（优先用 Init 注入的列表；为空才回退扫描节点下的所有 RectTransform）
+        if (_points.Count == 0) {
+            Transform root = snapContainer != null ? snapContainer : rectTransform.parent;
+            if (root != null) root.GetComponentsInChildren(true, _points);
+        }
         foreach (RectTransform sp in _points) {
             if (sp == null || sp.gameObject == gameObject) continue;
             // 用世界坐标算距离，不受父节点缩放影响
@@ -127,7 +133,21 @@ public class IDragable : MonoBehaviour, Interactable, IBeginDragHandler, IDragHa
                 nearest = sp;
             }
         }
-        return (nearest != null && minSqrDist <= snapRadius * snapRadius) ? nearest : null;
+
+        // 候选2：自身原点（物品初始位置），让物品也能吸回原位
+        float originSqr = (homeWorldPosition - rectTransform.position).sqrMagnitude;
+        if (originSqr < minSqrDist) {
+            minSqrDist = originSqr;
+            nearest = null;
+            snapToOrigin = true;
+        }
+
+        // 都没落在吸附半径内则视为未命中
+        if (minSqrDist > snapRadius * snapRadius) {
+            snapToOrigin = false;
+            return null;
+        }
+        return nearest; // 为 null 时 snapToOrigin 为 true，表示吸回原点
     }
 
 
