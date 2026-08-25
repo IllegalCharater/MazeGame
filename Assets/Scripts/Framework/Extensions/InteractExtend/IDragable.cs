@@ -16,14 +16,14 @@ public class IDragable : MonoBehaviour, Interactable, IBeginDragHandler, IDragHa
     private RectTransform rectTransform;
     private Vector2 originalLocalPointerPosition;
     private Vector2 homePosition;          // 本次拖拽起点（松手未吸附时回弹到此）
-    private Vector3 homeWorldPosition;   // 原点世界坐标快照（Init 时记录，用于与槽位做距离比较）
+    private Vector2 orignPositon;   // 原点世界坐标快照（Init 时记录，用于与槽位做距离比较）
     private List<RectTransform> _points = new();
 
     public void Init(DataBag options = null) {
         rectTransform = GetComponent<RectTransform>();
         homePosition = rectTransform.anchoredPosition;
         // 固定记录"原本的位置"：吸附点比较的是这个快照，而不是会跟着拖拽移动的 rectTransform 本身
-        homeWorldPosition = rectTransform.position;
+        orignPositon = rectTransform.anchoredPosition;
         if (options != null) {
             _points = options.Get("points", _points);
             restrictToParent = options.Get("restrictToParent", restrictToParent);
@@ -87,7 +87,7 @@ public class IDragable : MonoBehaviour, Interactable, IBeginDragHandler, IDragHa
         }
         else if (snapToOrigin) {
             // 离原点最近：吸回原本的位置
-            rectTransform.anchoredPosition = homePosition;
+            rectTransform.anchoredPosition = orignPositon;
         }
         else {
             // 未命中任何吸附点，回弹到拖拽起点
@@ -135,7 +135,7 @@ public class IDragable : MonoBehaviour, Interactable, IBeginDragHandler, IDragHa
         }
 
         // 候选2：自身原点（物品初始位置），让物品也能吸回原位
-        float originSqr = (homeWorldPosition - rectTransform.position).sqrMagnitude;
+        float originSqr = (orignPositon - WorldToAnchoredPosition(rectTransform.position)).sqrMagnitude;
         if (originSqr < minSqrDist) {
             minSqrDist = originSqr;
             nearest = null;
